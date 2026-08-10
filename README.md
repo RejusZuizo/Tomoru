@@ -136,7 +136,7 @@ nothing. On Arch that's `sudo pacman -S vlc`; on Debian/Ubuntu,
 You'll need the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
-git clone <your-repo-url> tomoshibi
+git clone https://github.com/socom1/Tomoshibi.git tomoshibi
 cd tomoshibi
 dotnet restore
 dotnet run --project src/Tomoshibi

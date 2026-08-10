@@ -1,0 +1,63 @@
+name: Bug report
+description: Something in tomoshibi doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found a security problem instead? Don't file it here — see
+        [SECURITY.md](../blob/main/SECURITY.md) and report it privately.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what happened, and what you expected instead.
+      placeholder: |
+        1. Opened the subjects page
+        2. Pressed ✕ on a subject
+        3. Expected a confirmation; the subject vanished
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Settings shows it, next to "verified by the creator".
+      placeholder: "2.1.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: crashlog
+    attributes:
+      label: Crash or error log
+      description: |
+        If the app closed or showed a failure notice, there's a log for it.
+        Settings → open folder, then look for `crash-*.log` or `error-*.log`.
+        Paste the newest one.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: anything
+    attributes:
+      label: Anything else
+      description: |
+        Screenshots help. If an import caused it, attach the file — that's the
+        fastest possible bug report.
+    validations:
+      required: false
