@@ -26,14 +26,9 @@ public partial class PomodoroViewModel : ViewModelBase
         { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
     private int _spinIndex;
 
-    private int _remainingSeconds;
-    private int _round = 1; // current focus round within the set (1..RoundsBeforeLongBreak)
-
-    // Captured when the phase starts so the phase keeps the length it began
-    // with — changing settings or the active task mid-block neither warps the
-    // progress bar nor mis-credits the stats.
-    private int _phaseTotalSeconds;
-    private int _phaseFocusMinutes;
+    // The rules live in PomodoroMachine, which knows nothing about clocks or
+    // Avalonia; everything below is presentation and plumbing.
+    private readonly PomodoroMachine _machine;
 
     /// <summary>Raised when a focus block finishes; carries the focused minutes.
     /// Not raised for breaks or when the user skips.</summary>
@@ -134,6 +129,7 @@ public partial class PomodoroViewModel : ViewModelBase
         _getSettings = getSettings;
         _sound = sound;
         _notify = notify;
+        _machine = new PomodoroMachine(getSettings);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += OnTick;
 
@@ -144,7 +140,7 @@ public partial class PomodoroViewModel : ViewModelBase
             Spinner = SpinFrames[_spinIndex];
         };
 
-        SetPhase(PomodoroPhase.Focus, resetRound: true);
+        SyncFromMachine();
     }
 
     /// <summary>Parameterless ctor for the XAML designer preview only.</summary>
@@ -174,16 +170,19 @@ public partial class PomodoroViewModel : ViewModelBase
     {
         _timer.Stop();
         IsRunning = false;
-        _remainingSeconds = _phaseTotalSeconds;
-        UpdateTimeDisplay();
-        UpdatePaused();
+        _machine.Reset();
+        SyncFromMachine();
     }
 
     [RelayCommand]
     private void Skip()
     {
-        // Move on without counting the current block.
-        Advance(natural: false);
+        // Move on without counting the current block: no events, no chime, no
+        // auto-continue — a skip is the user intervening.
+        _timer.Stop();
+        IsRunning = false;
+        _machine.Advance();
+        SyncFromMachine();
     }
 
     /// <summary>
@@ -193,95 +192,62 @@ public partial class PomodoroViewModel : ViewModelBase
     /// </summary>
     public void ApplySettings()
     {
-        if (!IsRunning)
-            SetPhase(Phase, resetRound: false);
+        if (IsRunning)
+            return;
+
+        _machine.Refresh();
+        SyncFromMachine();
     }
 
     private void OnTick(object? sender, EventArgs e)
     {
-        if (_remainingSeconds > 0)
-        {
-            _remainingSeconds--;
-            UpdateTimeDisplay();
-        }
+        var finished = _machine.Tick();
+        SyncFromMachine();
 
-        if (_remainingSeconds <= 0)
-            Advance(natural: true);
+        if (finished is { } block)
+            OnBlockFinished(block);
     }
 
-    private void Advance(bool natural)
+    /// <summary>A block ran out on its own: credit it, announce it, and start
+    /// the next one if the user asked for that.</summary>
+    private void OnBlockFinished(CompletedBlock block)
     {
         _timer.Stop();
         IsRunning = false;
 
-        // Captured before SetPhase overwrites them — the block that just ended.
-        var finishedPhase = Phase;
-        var finishedFocusMinutes = _phaseFocusMinutes;
+        if (block.Phase == PomodoroPhase.Focus)
+            FocusSessionCompleted?.Invoke(block.FocusMinutes);
 
-        switch (Phase)
+        BlockCompleted?.Invoke(block.Phase, block.FocusMinutes);
+
+        var s = _getSettings();
+
+        if (s.ChimeEnabled)
+            _sound?.PlayPhaseChime();
+
+        if (s.NotificationsEnabled)
         {
-            case PomodoroPhase.Focus:
-                if (natural)
-                    FocusSessionCompleted?.Invoke(_phaseFocusMinutes);
-
-                var longDue = _round >= _getSettings().RoundsBeforeLongBreak;
-                SetPhase(longDue ? PomodoroPhase.LongBreak : PomodoroPhase.ShortBreak, resetRound: false);
-                break;
-
-            case PomodoroPhase.ShortBreak:
-                _round++;
-                SetPhase(PomodoroPhase.Focus, resetRound: false);
-                break;
-
-            case PomodoroPhase.LongBreak:
-                SetPhase(PomodoroPhase.Focus, resetRound: true);
-                break;
+            _notify?.Notify("灯火 · tomoshibi", Phase == PomodoroPhase.Focus
+                ? "break over — back to focus 集中"
+                : $"focus done — {PhaseShortLabel} 休憩");
         }
 
-        // A skip is the user intervening — let them choose when to resume.
-        if (natural)
+        if (s.AutoContinue)
         {
-            BlockCompleted?.Invoke(finishedPhase, finishedFocusMinutes);
-
-            var s = _getSettings();
-
-            if (s.ChimeEnabled)
-                _sound?.PlayPhaseChime();
-
-            if (s.NotificationsEnabled)
-            {
-                _notify?.Notify("灯火 · tomoshibi", Phase == PomodoroPhase.Focus
-                    ? "break over — back to focus 集中"
-                    : $"focus done — {PhaseShortLabel} 休憩");
-            }
-
-            if (s.AutoContinue)
-            {
-                _timer.Start();
-                IsRunning = true;
-            }
+            _timer.Start();
+            IsRunning = true;
         }
 
         UpdatePaused();
     }
 
-    private void SetPhase(PomodoroPhase phase, bool resetRound)
+    /// <summary>Pull the machine's state through to the bindable surface.</summary>
+    private void SyncFromMachine()
     {
-        if (resetRound)
-            _round = 1;
-
+        var phase = _machine.Phase;
         var s = _getSettings();
 
         Phase = phase;
-        _phaseTotalSeconds = phase switch
-        {
-            PomodoroPhase.Focus => s.FocusMinutes * 60,
-            PomodoroPhase.ShortBreak => s.ShortBreakMinutes * 60,
-            PomodoroPhase.LongBreak => s.LongBreakMinutes * 60,
-            _ => s.FocusMinutes * 60
-        };
-        _phaseFocusMinutes = s.FocusMinutes;
-        _remainingSeconds = _phaseTotalSeconds;
 
         PhaseLabel = phase switch
         {
@@ -303,8 +269,8 @@ public partial class PomodoroViewModel : ViewModelBase
         RoundLabel = phase switch
         {
             PomodoroPhase.Focus => string.Join(" ",
-                Enumerable.Range(1, Math.Max(s.RoundsBeforeLongBreak, _round))
-                          .Select(i => i <= _round ? "●" : "○")),
+                Enumerable.Range(1, Math.Max(s.RoundsBeforeLongBreak, _machine.Round))
+                          .Select(i => i <= _machine.Round ? "●" : "○")),
             PomodoroPhase.LongBreak => "long break",
             _ => "short break"
         };
@@ -315,14 +281,10 @@ public partial class PomodoroViewModel : ViewModelBase
 
     private void UpdateTimeDisplay()
     {
-        var span = TimeSpan.FromSeconds(_remainingSeconds);
+        var span = TimeSpan.FromSeconds(_machine.RemainingSeconds);
         TimeDisplay = $"{(int)span.TotalMinutes:00}:{span.Seconds:00}";
-
-        Progress = _phaseTotalSeconds > 0
-            ? (double)_remainingSeconds / _phaseTotalSeconds
-            : 0.0;
+        Progress = _machine.Progress;
     }
 
-    private void UpdatePaused() =>
-        IsPaused = !IsRunning && _remainingSeconds > 0 && _remainingSeconds < _phaseTotalSeconds;
+    private void UpdatePaused() => IsPaused = !IsRunning && _machine.IsMidPhase;
 }
