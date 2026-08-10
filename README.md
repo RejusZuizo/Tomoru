@@ -117,8 +117,19 @@ suspicious on your behalf:
 - **Windows** — SmartScreen shows "Windows protected your PC". Click
   **More info** → **Run anyway** once.
 
+- **Linux** — no warning to click through. Extract the tarball anywhere and
+  run `Tomoshibi`, or drop `tomoshibi.desktop` into
+  `~/.local/share/applications` (fix its `Exec`/`Icon` paths to wherever you
+  extracted) to get it in your app menu.
+
 The app tells you in settings when a newer release is out (you can turn that
-check off). On Linux, build from source below — the packaged build is coming.
+check off).
+
+**On Linux, install `libvlc` for audio.** The build carries everything else,
+but the media service loads the system libvlc — without it the app runs fine
+and simply stays quiet: flashcard audio and video, and the music player, do
+nothing. On Arch that's `sudo pacman -S vlc`; on Debian/Ubuntu,
+`sudo apt install libvlc-dev vlc`.
 
 ## Building from source
 
@@ -145,7 +156,7 @@ Use the packaging scripts — they handle the per-platform wrapping:
 # macOS: (tested)
 ./scripts/pack-mac.sh
 
-# Linux: tar.gz with a .desktop launcher (written, not yet run on Linux)
+# Linux: tar.gz with a .desktop launcher (tested on Arch)
 ./scripts/pack-linux.sh
 
 # Windows: zip of a self-contained folder (tested)

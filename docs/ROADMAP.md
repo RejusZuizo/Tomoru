@@ -175,9 +175,33 @@ Dress the repo for visitors and publish the first real builds.
 - [x] Download & install section in the README (Gatekeeper / SmartScreen
       notes for the unsigned builds)
 - [x] Bump ReleaseNotes to 2.0.0
-- [ ] Tag v2.0.0 and publish a GitHub Release with the platform builds
-      (mac + windows first — the linux script is still unproven, so linux
-      stays build-from-source for now)
+- [x] Tag v2.0.0
+- [ ] **Publish a GitHub Release with the platform builds** — all three now,
+      since `pack-linux.sh` has been run on a real Arch box and produces a
+      working tarball. Still the one thing standing between the app and its
+      users: tags run through v2.1.2, but the only Release is an unpublished
+      v2.0.0 draft, so `/releases/latest` 404s — which breaks both the README
+      download link and the launch-time update check.
+
+## v2.1 — recall, rebuilt
+
+Shipped after the 2.0 release, in three quick versions. Feature work on the
+flashcards, then two passes of visual polish across the app.
+
+- [x] **v2.1.0 — flashcards as a real SRS.** The review destination rebuilt
+      around an FSRS scheduler with its own review log and stats: card
+      generation from note types, cloze parsing, image occlusion, a search
+      query parser over the collection, media storage, and `.apkg` import
+      that reads Anki's SQLite collection directly (the TSV path from v1.9
+      stays)
+- [x] **v2.1.1 — subjects, folded around the term.** Subject cards redesigned
+      into calm two-line rows, the page reorganised around what matters this
+      term, and one shared 960px content column adopted across every page
+- [x] **v2.1.2 — the wide screen.** Dashboard reflows into two columns and
+      the timetable grid stretches to match; pages ease in and out instead of
+      snapping; the review card frames prompt and answer; tag chips follow the
+      theme (no more dark chips in the light palette); pomodoro header icons
+      aligned
 
 ## Later
 
@@ -195,11 +219,18 @@ Dress the repo for visitors and publish the first real builds.
 
 ## Testing
 
-The pure logic is covered: the grade engine, the task-template parser
-(including the done-toggle source surgery), storage round-trip + crash
-recovery, the daily-reset/banking rules, the load-time migrations and the
-`.ics` importer. Still open: the Pomodoro state machine, which needs
-extracting from its timer before tests can drive it.
+216 tests, all passing. The pure logic is covered: the grade engine, the
+task-template parser (including the done-toggle source surgery), storage
+round-trip + crash recovery, the daily-reset/banking rules, the load-time
+migrations, the `.ics` importer, the ember seal, the palette matcher and its
+frecency ordering — and, since v2.1, the FSRS scheduler, card generation,
+cloze and occlusion layout, the search query parser, the review log and
+`.apkg` import.
+
+Still open, and now the only real gap: **the Pomodoro state machine**. The
+app's central feature is the one piece with no tests, because the phase logic
+lives welded to a live timer in `PomodoroViewModel`. Extracting the
+transitions into a pure, tick-driven type would make it drivable from a test.
 
 ## Out of scope (for now)
 
