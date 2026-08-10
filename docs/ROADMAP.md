@@ -203,23 +203,75 @@ flashcards, then two passes of visual polish across the app.
       theme (no more dark chips in the light palette); pomodoro header icons
       aligned
 
+## v2.2 — foundations
+
+The version that pays down what shipping fast left behind, then moves the
+framework forward. Ordered deliberately: **publish the release first**, so
+users get a stable build before anything churns underneath them.
+
+### Robustness — done, ahead of the rest
+
+- [x] No import or export can take the app down. Every file-picker handler
+      was an `async void` doing file I/O with no `try`/`catch`, so a full
+      disk or a malformed `.apkg` ended the session; they now run through a
+      guard that reports the failure in a notice and keeps the app up
+- [x] Forms say why they rejected you instead of doing nothing — eleven
+      commands returned silently, the assessment modal worst of all (two
+      independent reasons, no hint which)
+- [x] Deleting a subject asks first, and names the assessments going with it
+- [x] 44 icon buttons carry an accessibility name; there were none anywhere
+- [x] The Pomodoro rules extracted into a clock-free `PomodoroMachine` and
+      covered by 16 tests — the app's central feature, previously the one
+      piece with no coverage
+- [x] Grade-scale editing moved out of the 881-line `SubjectsViewModel`
+- [x] `pack-linux.sh` proven on a real Arch box; Linux is a download, not a
+      build-from-source footnote
+- [x] libvlc handed back at shutdown — `VlcMediaService` was disposable and
+      never disposed
+
+### Avalonia, in two steps
+
+- [ ] **11.2.1 → 11.3.20 first.** Nineteen patch releases, no API change.
+      Dependabot offers it now the NuGet job runs again. Land it, confirm
+      nothing moved, and migrate from a known-good baseline
+- [ ] **Then Avalonia 12.** The API surface is a non-event: the codebase uses
+      none of the documented breaking changes — no `SystemDecorations`, no
+      `GotFocus`/`LostFocus` handlers, no data annotations, no direct
+      SkiaSharp, no TreeDataGrid — and compiled bindings, on by default in
+      12, are already switched on here. `net8.0` stays supported
+- [ ] The real work is the theme: `Controls.axaml` has ~50 `/template/`
+      selectors, a dozen reaching into `PART_BorderElement`. Those are Fluent
+      internals and won't fail at build — they'll silently stop applying, so
+      this needs a visual pass over every control, not an API rewrite
+- [ ] `Avalonia.Diagnostics` → `AvaloniaUI.DiagnosticsSupport` +
+      `AttachDeveloperTools()`. Check what the free package still covers; the
+      standalone Developer Tools app is a paid Accelerate product
+- [ ] Drop the Avalonia major-version ignore from `dependabot.yml` on the
+      migration branch
+
+### The small ones, pulled out of Later
+
+- [ ] **Palette content beyond titles** — search descriptions and course codes
+      too, so "MATH201" finds every row that touches the course. (The fuzzy,
+      typo-tolerant matching itself shipped in v2.0.)
+- [ ] **Group-project awareness** — an optional owner on todo subtasks, so a
+      shared project's split shows in the backlog without any sync or accounts
+
+### Ambient soundscapes
+
+- [ ] Rain / café / waves / night. Needs real audio assets — synthesis won't
+      cut it — so sourcing licensed loops is as much of the job as the code.
+      The LibVLC stack from the v2.1 flashcards rebuild already plays them
+
 ## Later
 
-- **Ambient soundscapes** — rain / café / waves / night (needs real audio
-  assets; synthesis won't cut it). The local-folder music player is the
-  nearest thing today.
-- **Palette content beyond titles** — search descriptions and course codes
-  too, so "MATH201" finds every row that touches the course. (The fuzzy,
-  typo-tolerant matching itself shipped in v2.0.)
-- **Group-project awareness** — an optional owner on todo subtasks, so a shared
-  project's split shows in the backlog without any sync or accounts.
 - **Bundle a coding font** — pixel-identical look across OSes.
 - **Code signing** — signed/notarized builds, so SmartScreen and Gatekeeper
   trust the download without a click-through.
 
 ## Testing
 
-216 tests, all passing. The pure logic is covered: the grade engine, the
+232 tests, all passing. The pure logic is covered: the grade engine, the
 task-template parser (including the done-toggle source surgery), storage
 round-trip + crash recovery, the daily-reset/banking rules, the load-time
 migrations, the `.ics` importer, the ember seal, the palette matcher and its
@@ -227,10 +279,14 @@ frecency ordering — and, since v2.1, the FSRS scheduler, card generation,
 cloze and occlusion layout, the search query parser, the review log and
 `.apkg` import.
 
-Still open, and now the only real gap: **the Pomodoro state machine**. The
-app's central feature is the one piece with no tests, because the phase logic
-lives welded to a live timer in `PomodoroViewModel`. Extracting the
-transitions into a pure, tick-driven type would make it drivable from a test.
+The long-standing gap — the Pomodoro state machine — closed in v2.2: the
+phase logic moved out of `PomodoroViewModel` into a clock-free
+`PomodoroMachine`, where time arrives only through `Tick()`, and 16 tests now
+drive whole study afternoons in a loop.
+
+What's still uncovered is the view models themselves, which is why a change
+like the grade-scale extraction has to be verified by hand. Worth a look if
+anything there starts changing often.
 
 ## Out of scope (for now)
 
