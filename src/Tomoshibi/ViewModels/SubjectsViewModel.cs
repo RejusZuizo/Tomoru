@@ -42,24 +42,8 @@ public partial class SubjectsViewModel : ViewModelBase
     /// <summary>Course codes seen across the app, for the form autocomplete.</summary>
     public ObservableCollection<string> KnownCourses { get; } = new();
 
-    public IReadOnlyList<ScaleOption> ScaleOptions { get; } = new[]
-    {
-        new ScaleOption(GradeScaleKind.UsGpa, "us 4.0"),
-        new ScaleOption(GradeScaleKind.UkHonours, "uk honours"),
-        new ScaleOption(GradeScaleKind.Ects, "ects"),
-        new ScaleOption(GradeScaleKind.Percentage, "percentage"),
-        new ScaleOption(GradeScaleKind.Custom, "custom"),
-    };
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsCustomScale))]
-    private ScaleOption _selectedScale;
-
-    /// <summary>True when the custom scale is selected — gates the band editor.</summary>
-    public bool IsCustomScale => SelectedScale?.Kind == GradeScaleKind.Custom;
-
-    /// <summary>The editable rows of the custom grade scale.</summary>
-    public ObservableCollection<GradeBandViewModel> CustomBands { get; } = new();
+    /// <summary>Which grade scale is in force, and the custom bands behind it.</summary>
+    public GradeScaleViewModel Scale { get; }
 
     [ObservableProperty] private bool _hasSubjects;
     [ObservableProperty] private bool _hasInsights;
@@ -132,6 +116,27 @@ public partial class SubjectsViewModel : ViewModelBase
     [ObservableProperty] private string _modalAction = "add";
 
     [ObservableProperty] private string _formName = string.Empty;
+
+    // A blank name used to make "add" do nothing at all. Say so instead.
+    [ObservableProperty] private bool _isFormNameInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFormError))]
+    private string _formError = string.Empty;
+
+    public bool HasFormError => FormError.Length > 0;
+
+    partial void OnFormNameChanged(string value)
+    {
+        if (IsFormNameInvalid && !string.IsNullOrWhiteSpace(value))
+            ClearFormError();
+    }
+
+    private void ClearFormError()
+    {
+        IsFormNameInvalid = false;
+        FormError = string.Empty;
+    }
     [ObservableProperty] private string _formCode = string.Empty;
     [ObservableProperty] private decimal? _formCredits = 1;
     [ObservableProperty] private decimal? _formYear = 1;
@@ -140,23 +145,31 @@ public partial class SubjectsViewModel : ViewModelBase
     [ObservableProperty] private decimal? _formTargetHours;
     [ObservableProperty] private string _formDropRules = string.Empty;
 
+    // ---- Delete confirmation ----
+    // Holding the staged row itself (rather than a bare bool) keeps the prompt
+    // and the delete pointed at the same subject even if the list rebuilds
+    // underneath them.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRemoveConfirmOpen))]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmRemoveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelRemoveCommand))]
+    private SubjectViewModel? _pendingRemoval;
+
+    public bool IsRemoveConfirmOpen => PendingRemoval is not null;
+
+    [ObservableProperty] private string _removeConfirmName = string.Empty;
+    [ObservableProperty] private string _removeConfirmDetail = string.Empty;
+
     public SubjectsViewModel(AppState state, Action save, Action<string> openUrl)
     {
         _state = state;
         _save = save;
         _openUrl = openUrl;
 
-        _selectedScale = ScaleOptions.FirstOrDefault(o => o.Kind == _state.GradeScale)
-                         ?? ScaleOptions[0];
+        // Re-grading is this page's job, so the scale editor calls back in.
+        Scale = new GradeScaleViewModel(state, RegradeEverything);
 
         _overallGoal = _state.OverallGoalPercent is { } g ? (decimal)g : 75m;
-
-        // Seed a starter custom scale on first use and point the engine at the
-        // live list so band edits are seen everywhere without re-wiring.
-        if (_state.CustomGradeBands.Count == 0)
-            _state.CustomGradeBands.AddRange(GradeScale.DefaultCustomBands());
-        GradeScale.CustomBands = _state.CustomGradeBands;
-        RebuildCustomBands();
 
         foreach (var subject in _state.Subjects)
             Items.Add(NewRow(subject));
@@ -165,61 +178,14 @@ public partial class SubjectsViewModel : ViewModelBase
         RebuildKnownCourses();
     }
 
-    partial void OnSelectedScaleChanged(ScaleOption value)
+    /// <summary>The scale changed under us — re-read every subject against it
+    /// and save. Handed to <see cref="Scale"/> at construction.</summary>
+    private void RegradeEverything()
     {
-        if (_state.GradeScale == value.Kind)
-            return;
-
-        _state.GradeScale = value.Kind;
         foreach (var row in Items)
             row.RefreshScale();
         RebuildAll();
         _save();
-    }
-
-    private void RebuildCustomBands()
-    {
-        CustomBands.Clear();
-        foreach (var band in _state.CustomGradeBands.OrderByDescending(b => b.MinPercent))
-            CustomBands.Add(new GradeBandViewModel(band, OnCustomBandChanged));
-    }
-
-    /// <summary>A band's min/label/points changed — re-grade everything against
-    /// the new scale. The engine already points at the live list.</summary>
-    private void OnCustomBandChanged()
-    {
-        GradeScale.CustomBands = _state.CustomGradeBands;
-        foreach (var row in Items)
-            row.RefreshScale();
-        RebuildAll();
-        _save();
-    }
-
-    [RelayCommand]
-    private void AddBand()
-    {
-        var band = new GradeBand { MinPercent = 0, Label = "new", Points = 0 };
-        _state.CustomGradeBands.Add(band);
-        CustomBands.Add(new GradeBandViewModel(band, OnCustomBandChanged));
-        OnCustomBandChanged();
-    }
-
-    [RelayCommand]
-    private void RemoveBand(GradeBandViewModel? row)
-    {
-        if (row is null) return;
-        _state.CustomGradeBands.Remove(row.Model);
-        CustomBands.Remove(row);
-        OnCustomBandChanged();
-    }
-
-    [RelayCommand]
-    private void ResetBands()
-    {
-        _state.CustomGradeBands.Clear();
-        _state.CustomGradeBands.AddRange(GradeScale.DefaultCustomBands());
-        RebuildCustomBands();
-        OnCustomBandChanged();
     }
 
     /// <summary>Called on navigation here — picks up course codes added on
@@ -326,6 +292,7 @@ public partial class SubjectsViewModel : ViewModelBase
         FormTarget = null;
         FormTargetHours = null;
         FormDropRules = string.Empty;
+        ClearFormError();
         ModalTitle = "新しい科目 · new subject";
         ModalAction = "add";
         IsModalOpen = true;
@@ -343,20 +310,31 @@ public partial class SubjectsViewModel : ViewModelBase
         FormTargetHours = row.Model.TargetHoursPerWeek is { } th ? (decimal)th : null;
         FormDropRules = string.Join("; ",
             row.Model.DropRules.Select(r => $"{r.Category}: best {r.KeepBest}"));
+        ClearFormError();
         ModalTitle = "編集 · edit subject";
         ModalAction = "save";
         IsModalOpen = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanUseModal))]
-    private void CancelModal() => IsModalOpen = false;
+    private void CancelModal()
+    {
+        ClearFormError();
+        IsModalOpen = false;
+    }
 
     [RelayCommand(CanExecute = nameof(CanUseModal))]
     private void ConfirmModal()
     {
         var name = FormName?.Trim();
         if (string.IsNullOrWhiteSpace(name))
+        {
+            IsFormNameInvalid = true;
+            FormError = "a subject needs a name.";
             return;
+        }
+
+        ClearFormError();
 
         var target = _editing ?? new Subject();
 
@@ -414,11 +392,40 @@ public partial class SubjectsViewModel : ViewModelBase
         return rules;
     }
 
+    /// <summary>The ✕ on a subject card. Deleting takes the subject's whole
+    /// assessment history with it and there's no undo, so this only stages the
+    /// row — <see cref="ConfirmRemove"/> is what actually removes it.</summary>
     [RelayCommand]
     private void Remove(SubjectViewModel? row)
     {
         if (row is null)
             return;
+
+        RemoveConfirmName = row.Model.Name;
+
+        // Name what's actually at stake: a subject carrying a term's worth of
+        // marks is a very different loss from an empty one just added.
+        var assessments = row.Model.Assessments.Count;
+        RemoveConfirmDetail = assessments switch
+        {
+            0 => "this can't be undone.",
+            1 => "its 1 assessment goes with it, and this can't be undone.",
+            _ => $"its {assessments} assessments go with it, and this can't be undone.",
+        };
+
+        PendingRemoval = row;
+    }
+
+    [RelayCommand(CanExecute = nameof(HasPendingRemoval))]
+    private void CancelRemove() => PendingRemoval = null;
+
+    [RelayCommand(CanExecute = nameof(HasPendingRemoval))]
+    private void ConfirmRemove()
+    {
+        if (PendingRemoval is not { } row)
+            return;
+
+        PendingRemoval = null;
 
         if (row.Model == _editing)
         {
@@ -433,8 +440,11 @@ public partial class SubjectsViewModel : ViewModelBase
         Items.Remove(row);
 
         RebuildAll();
+        RebuildKnownCourses();
         _save();
     }
+
+    private bool HasPendingRemoval() => PendingRemoval is not null;
 
     /// <summary>Build a subject row wired to this page's callbacks — the
     /// change/save hook, the live grade scale, and the browser-open action
@@ -720,7 +730,7 @@ public partial class SubjectsViewModel : ViewModelBase
         };
 
         GpaCaption = $"{graded.Count} of {Items.Count} subjects graded · " +
-                     $"{totalCredits:0.#} credits · {SelectedScale.Label}";
+                     $"{totalCredits:0.#} credits · {Scale.Selected.Label}";
     }
 
     /// <summary>Year-weighted degree projection: each year's credit-weighted
@@ -783,7 +793,7 @@ public partial class SubjectsViewModel : ViewModelBase
         var sb = new StringBuilder();
         sb.AppendLine($"# tomoshibi transcript · {DateTime.Now:yyyy-MM-dd}");
         sb.AppendLine();
-        sb.AppendLine($"- scale: {SelectedScale.Label}");
+        sb.AppendLine($"- scale: {Scale.Selected.Label}");
         sb.AppendLine($"- overall: {GpaLabel}");
         if (HasDegreeProjection)
             sb.AppendLine($"- {DegreeLabel}");

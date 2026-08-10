@@ -59,6 +59,26 @@ public partial class TimetableViewModel : ViewModelBase
     [ObservableProperty] private string _newDeadlineTitle = string.Empty;
     [ObservableProperty] private string _newDeadlineCourse = string.Empty;
 
+    [ObservableProperty] private bool _isDeadlineTitleInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDeadlineError))]
+    private string _deadlineError = string.Empty;
+
+    public bool HasDeadlineError => DeadlineError.Length > 0;
+
+    partial void OnNewDeadlineTitleChanged(string value)
+    {
+        if (IsDeadlineTitleInvalid && !string.IsNullOrWhiteSpace(value))
+            ClearDeadlineError();
+    }
+
+    private void ClearDeadlineError()
+    {
+        IsDeadlineTitleInvalid = false;
+        DeadlineError = string.Empty;
+    }
+
     // ---- New class slot form (doubles as the edit form) ----
     [ObservableProperty] private WeekDay _newSlotDay = WeekDay.Mon;
     [ObservableProperty] private TimeSpan _newSlotStart = new(9, 0, 0);
@@ -104,6 +124,32 @@ public partial class TimetableViewModel : ViewModelBase
     [ObservableProperty] private string _slotModalTitle = "新しい授業 · new class";
     [ObservableProperty] private bool _isSlotModalOpen;
     private ClassSlot? _editingSlot;
+
+    // ---- Slot form validation ----
+    // "add" used to just do nothing on a blank name or a backwards time range,
+    // which reads as a broken button rather than a rejected form. Say what's
+    // wrong instead, and outline the offending field.
+    [ObservableProperty] private bool _isSlotTitleInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSlotError))]
+    private string _slotError = string.Empty;
+
+    public bool HasSlotError => SlotError.Length > 0;
+
+    /// <summary>Clear the complaint the moment they start fixing it — a red
+    /// field that stays red while you type is just nagging.</summary>
+    partial void OnNewSlotTitleChanged(string value)
+    {
+        if (IsSlotTitleInvalid && !string.IsNullOrWhiteSpace(value))
+            ClearSlotError();
+    }
+
+    private void ClearSlotError()
+    {
+        IsSlotTitleInvalid = false;
+        SlotError = string.Empty;
+    }
 
     /// <summary>The seven weekdays as picker options for the new-slot form.</summary>
     public IReadOnlyList<WeekDay> WeekDays { get; } = Enum.GetValues<WeekDay>();
@@ -196,8 +242,18 @@ public partial class TimetableViewModel : ViewModelBase
     private void AddDeadline()
     {
         var title = NewDeadlineTitle?.Trim();
+
+        // Kept as one condition so the compiler still narrows `title` below.
         if (string.IsNullOrWhiteSpace(title) || NewDeadlineDate is null)
+        {
+            IsDeadlineTitleInvalid = string.IsNullOrWhiteSpace(title);
+            DeadlineError = IsDeadlineTitleInvalid
+                ? "a deadline needs a title and a due date."
+                : "pick a due date.";
             return;
+        }
+
+        ClearDeadlineError();
 
         _state.Todos.Add(new TodoItem
         {
@@ -231,10 +287,20 @@ public partial class TimetableViewModel : ViewModelBase
     {
         var title = NewSlotTitle?.Trim();
         if (string.IsNullOrWhiteSpace(title))
+        {
+            IsSlotTitleInvalid = true;
+            SlotError = "a class needs a name.";
             return;
+        }
 
         if (NewSlotEnd <= NewSlotStart)
+        {
+            IsSlotTitleInvalid = false;
+            SlotError = "the end time has to come after the start.";
             return;
+        }
+
+        ClearSlotError();
 
         var course = string.IsNullOrWhiteSpace(NewSlotCourse) ? null : NewSlotCourse.Trim();
 
@@ -347,6 +413,7 @@ public partial class TimetableViewModel : ViewModelBase
     {
         _editingSlot = null;
         SlotFormLabel = "add";
+        ClearSlotError();
         NewSlotTitle = string.Empty;
         NewSlotCourse = string.Empty;
         NewDeadlineTitle = string.Empty;

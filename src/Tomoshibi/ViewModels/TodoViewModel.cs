@@ -66,6 +66,26 @@ public partial class TodoViewModel : ViewModelBase
     [ObservableProperty] private string _modalAction = "add";
 
     [ObservableProperty] private string _formTitle = string.Empty;
+
+    [ObservableProperty] private bool _isFormTitleInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFormError))]
+    private string _formError = string.Empty;
+
+    public bool HasFormError => FormError.Length > 0;
+
+    partial void OnFormTitleChanged(string value)
+    {
+        if (IsFormTitleInvalid && !string.IsNullOrWhiteSpace(value))
+            ClearFormError();
+    }
+
+    private void ClearFormError()
+    {
+        IsFormTitleInvalid = false;
+        FormError = string.Empty;
+    }
     [ObservableProperty] private string _formDescription = string.Empty;
     [ObservableProperty] private string _formCourse = string.Empty;
     [ObservableProperty] private DateTime? _formDue;
@@ -172,7 +192,13 @@ public partial class TodoViewModel : ViewModelBase
     {
         var title = FormTitle?.Trim();
         if (string.IsNullOrWhiteSpace(title))
+        {
+            IsFormTitleInvalid = true;
+            FormError = "a ticket needs a title.";
             return;
+        }
+
+        ClearFormError();
 
         var target = _editing ?? new TodoItem { Number = _state.NextTodoNumber++ };
 

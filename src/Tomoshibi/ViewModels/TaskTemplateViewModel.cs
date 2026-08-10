@@ -67,6 +67,14 @@ public partial class TaskTemplateViewModel : ViewModelBase
     // Code-mode field
     [ObservableProperty] private string _newTaskCode = string.Empty;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTaskError))]
+    private string _taskError = string.Empty;
+
+    public bool HasTaskError => TaskError.Length > 0;
+
+    private void ClearTaskError() => TaskError = string.Empty;
+
     public TaskTemplateViewModel(AppState state, Action save, Action onActiveTaskChanged)
     {
         _state = state;
@@ -114,7 +122,14 @@ public partial class TaskTemplateViewModel : ViewModelBase
     {
         var block = IsSimpleMode ? BuildBlockFromForm() : NewTaskCode?.Trim();
         if (string.IsNullOrWhiteSpace(block))
+        {
+            TaskError = IsSimpleMode
+                ? "a task needs a name."
+                : "there's nothing to add yet.";
             return;
+        }
+
+        ClearTaskError();
 
         var existing = (Source ?? string.Empty).TrimEnd();
         Source = string.IsNullOrEmpty(existing) ? block : $"{existing}\n\n{block}";

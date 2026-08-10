@@ -88,6 +88,14 @@ public partial class ReviewViewModel : ViewModelBase
 
     // ---- New-deck form ----
     [ObservableProperty] private string _newDeckName = string.Empty;
+
+    [ObservableProperty] private bool _isNewDeckNameInvalid;
+
+    partial void OnNewDeckNameChanged(string value)
+    {
+        if (IsNewDeckNameInvalid && !string.IsNullOrWhiteSpace(value))
+            IsNewDeckNameInvalid = false;
+    }
     [ObservableProperty] private string _newDeckCourse = string.Empty;
 
     /// <summary>What the last deck import did — shown under the page header.</summary>
@@ -240,7 +248,12 @@ public partial class ReviewViewModel : ViewModelBase
     {
         var name = NewDeckName?.Trim();
         if (string.IsNullOrWhiteSpace(name))
+        {
+            IsNewDeckNameInvalid = true;
             return;
+        }
+
+        IsNewDeckNameInvalid = false;
 
         var deck = new Deck
         {
