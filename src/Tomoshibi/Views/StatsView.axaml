@@ -146,13 +146,15 @@
 
                 <!-- Month nav -->
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Button Grid.Column="0" Classes="icon" Content="‹" FontSize="18"
+                    <Button Grid.Column="0" Classes="icon"
+                            AutomationProperties.Name="previous month" Content="‹" FontSize="18"
                             Command="{Binding PrevMonthCommand}"
                             ToolTip.Tip="previous month" />
                     <TextBlock Grid.Column="1" Text="{Binding MonthLabel}"
                                Classes="jp" FontSize="14"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <Button Grid.Column="2" Classes="icon" Content="›" FontSize="18"
+                    <Button Grid.Column="2" Classes="icon"
+                            AutomationProperties.Name="next month" Content="›" FontSize="18"
                             Command="{Binding NextMonthCommand}"
                             ToolTip.Tip="next month" />
                 </Grid>

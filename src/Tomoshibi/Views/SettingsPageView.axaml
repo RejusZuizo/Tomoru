@@ -223,8 +223,8 @@
                             <Grid ColumnDefinitions="*,160">
                                 <TextBlock Text="grade_scale" Classes="key" />
                                 <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding Subjects.ScaleOptions}"
-                                          SelectedItem="{Binding Subjects.SelectedScale}"
+                                          ItemsSource="{Binding Subjects.Scale.Options}"
+                                          SelectedItem="{Binding Subjects.Scale.Selected}"
                                           HorizontalAlignment="Stretch" Padding="10,6" />
                             </Grid>
                             <TextBlock Text="# grades are always entered as percentages — the scale only changes the labels"
@@ -232,13 +232,13 @@
 
                             <!-- Custom-scale band editor -->
                             <StackPanel Spacing="8" Margin="0,4,0,0"
-                                        IsVisible="{Binding Subjects.IsCustomScale}">
+                                        IsVisible="{Binding Subjects.Scale.IsCustom}">
                                 <Grid ColumnDefinitions="74,*,80,Auto">
                                     <TextBlock Text="min %" Classes="caption" />
                                     <TextBlock Grid.Column="1" Text="label" Classes="caption" Margin="8,0,0,0" />
                                     <TextBlock Grid.Column="2" Text="points" Classes="caption" Margin="8,0,0,0" />
                                 </Grid>
-                                <ItemsControl ItemsSource="{Binding Subjects.CustomBands}">
+                                <ItemsControl ItemsSource="{Binding Subjects.Scale.Bands}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:GradeBandViewModel">
                                             <Grid ColumnDefinitions="74,*,80,Auto" Margin="0,2,0,0">
@@ -251,8 +251,9 @@
                                                                Minimum="0" Maximum="10" Increment="0.1"
                                                                FormatString="0.0#" Margin="8,0,0,0"
                                                                FontSize="13" Padding="8,4" />
-                                                <Button Grid.Column="3" Content="✕" Classes="icon" Margin="6,0,0,0"
-                                                        Command="{Binding $parent[ItemsControl].((vm:SettingsPageViewModel)DataContext).Subjects.RemoveBandCommand}"
+                                                <Button Grid.Column="3" Content="✕" Classes="icon"
+                                                        AutomationProperties.Name="remove this grade band" Margin="6,0,0,0"
+                                                        Command="{Binding $parent[ItemsControl].((vm:SettingsPageViewModel)DataContext).Subjects.Scale.RemoveBandCommand}"
                                                         CommandParameter="{Binding}" />
                                             </Grid>
                                         </DataTemplate>
@@ -260,9 +261,9 @@
                                 </ItemsControl>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button Classes="seg" Content="+ band"
-                                            Command="{Binding Subjects.AddBandCommand}" />
+                                            Command="{Binding Subjects.Scale.AddBandCommand}" />
                                     <Button Classes="seg" Content="reset"
-                                            Command="{Binding Subjects.ResetBandsCommand}" />
+                                            Command="{Binding Subjects.Scale.ResetBandsCommand}" />
                                 </StackPanel>
                                 <TextBlock Text="# each band covers its min % up to the next — set every points value to 0 for a percentage-only scale with no GPA"
                                            Classes="comment" />

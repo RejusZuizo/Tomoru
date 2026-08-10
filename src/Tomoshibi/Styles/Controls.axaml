@@ -124,6 +124,30 @@
         <Setter Property="BorderBrush" Value="{DynamicResource MatchaBrush}" />
     </Style>
 
+    <!-- A field the form just rejected. Sakura rather than the usual border,
+         and it outranks :pointerover below so the outline doesn't vanish the
+         moment the cursor crosses it. Cleared as soon as the field is fixed. -->
+    <Style Selector="TextBox.invalid /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource SakuraBrush}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+    <Style Selector="TextBox.invalid:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource SakuraBrush}" />
+    </Style>
+    <!-- Focus still wins: once they're typing in it, the field reads as active
+         rather than broken, and the message underneath carries the complaint. -->
+    <Style Selector="TextBox.invalid:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource MatchaBrush}" />
+    </Style>
+
+    <!-- The one-line "why that didn't work" under a rejected form. -->
+    <Style Selector="TextBlock.formerror">
+        <Setter Property="Foreground" Value="{DynamicResource SakuraBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="2,-6,0,0" />
+    </Style>
+
     <!-- Code editor variant — multi-line, monospace, subtle inset look. Used
          by the today task template editor. -->
     <Style Selector="TextBox.code">
@@ -193,6 +217,17 @@
         </Setter>
     </Style>
     <Style Selector="NumericUpDown:focus-within">
+        <Setter Property="BorderBrush" Value="{DynamicResource MatchaBrush}" />
+    </Style>
+
+    <!-- Rejected by the form. Declared after :focus-within, and re-stated for
+         the focused case below, so the outline survives a pointer crossing it
+         but still yields to matcha once they're actually typing in it. -->
+    <Style Selector="NumericUpDown.invalid">
+        <Setter Property="BorderBrush" Value="{DynamicResource SakuraBrush}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+    <Style Selector="NumericUpDown.invalid:focus-within">
         <Setter Property="BorderBrush" Value="{DynamicResource MatchaBrush}" />
     </Style>
 
@@ -566,6 +601,40 @@
     </Style>
     <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource MatchaDeepBrush}" />
+    </Style>
+
+    <!-- The failure banner. Sakura edge so it reads as a problem, but it sits
+         at the bottom out of the way and times itself out — a study app
+         shouldn't stop you to say an export didn't write. -->
+    <Style Selector="Border.notice">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SakuraBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="16,11" />
+        <Setter Property="MaxWidth" Value="460" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.notice.open">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!-- Destructive confirm — same weight as .accent so it sits level with the
+         cancel beside it, but sakura, so "delete" never gets clicked on the
+         muscle memory of "save". -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{DynamicResource SakuraBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E45F77" />
     </Style>
 
     <!-- Borderless icon button (gear, remove) -->

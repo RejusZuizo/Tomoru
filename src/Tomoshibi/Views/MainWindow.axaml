@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Tomoshibi.ViewModels"
         xmlns:conv="using:Tomoshibi.Converters"
+        xmlns:svc="using:Tomoshibi.Services"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
@@ -24,6 +25,9 @@
         <KeyBinding Gesture="Escape" Command="{Binding CloseWelcomeCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Today.Tasks.CancelAddTaskCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Todo.CancelModalCommand}" />
+        <!-- Ahead of the other subjects escapes: dismissing the delete prompt
+             shouldn't also close the page underneath it. -->
+        <KeyBinding Gesture="Escape" Command="{Binding Subjects.CancelRemoveCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.CancelModalCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.SelectedSubject.CancelAssessmentModalCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.CloseDetailCommand}" />
@@ -193,7 +197,8 @@
             <!-- Shell header: just the nav toggle. Page titles and page
                  actions live inside each destination view. -->
             <Grid Grid.Row="0" Margin="28,28,28,0" ColumnDefinitions="Auto,*">
-                <Button Grid.Column="0" Classes="icon" Content="☰" FontSize="18"
+                <Button Grid.Column="0" Classes="icon"
+                        AutomationProperties.Name="menu · メニュー" Content="☰" FontSize="18"
                         VerticalAlignment="Top"
                         Command="{Binding ToggleNavCommand}"
                         ToolTip.Tip="menu · メニュー" />
@@ -263,6 +268,9 @@
                          AcceptsReturn="True" TextWrapping="Wrap"
                          MinHeight="140" />
 
+                <TextBlock Classes="formerror" Text="{Binding TaskError}"
+                           IsVisible="{Binding HasTaskError}" />
+
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
                     <Button Grid.Column="0" Content="cancel"
                             HorizontalAlignment="Stretch"
@@ -293,7 +301,10 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding ModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormName}" Watermark="subject name" />
+                <TextBox Text="{Binding FormName}" Watermark="subject name (required)"
+                         Classes.invalid="{Binding IsFormNameInvalid}" />
+                <TextBlock Classes="formerror" Text="{Binding FormError}"
+                           IsVisible="{Binding HasFormError}" />
 
                 <Grid ColumnDefinitions="*,8,110">
                     <AutoCompleteBox Grid.Column="0" Text="{Binding FormCode}"
@@ -337,6 +348,42 @@
         </Border>
     </Border>
 
+    <!-- Delete-subject confirmation. The ✕ on a subject card stages the row
+         here rather than deleting outright: a subject carries its whole
+         assessment history and there's no undo. Cancel is the default-looking
+         button; delete wears sakura so it reads as the destructive one. -->
+    <Border Classes="modal-backdrop"
+            IsVisible="{Binding Subjects.IsRemoveConfirmOpen}"
+            Classes.open="{Binding Subjects.IsRemoveConfirmOpen}"
+            Background="#A0000000">
+        <Border Classes="card modal-card"
+                Width="360" Padding="22"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                DataContext="{Binding Subjects}"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
+            <StackPanel Spacing="12">
+                <TextBlock Text="削除 · delete subject" Classes="jp" />
+
+                <TextBlock Text="{Binding RemoveConfirmName}" FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding RemoveConfirmDetail}" Classes="caption"
+                           TextWrapping="Wrap" />
+
+                <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                    <Button Grid.Column="0" Content="keep it"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding CancelRemoveCommand}" />
+                    <Button Grid.Column="1" Content="delete" Classes="danger"
+                            HorizontalAlignment="Stretch" Margin="8,0,0,0"
+                            Command="{Binding ConfirmRemoveCommand}" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Border>
+
     <!-- Add / edit todo modal — root level so the backdrop dims the whole
          app, like the others. Drilled to Todo for its form. -->
     <Border Classes="modal-backdrop"
@@ -354,7 +401,10 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding ModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormTitle}" Watermark="what needs doing?" />
+                <TextBox Text="{Binding FormTitle}" Watermark="what needs doing? (required)"
+                         Classes.invalid="{Binding IsFormTitleInvalid}" />
+                <TextBlock Classes="formerror" Text="{Binding FormError}"
+                           IsVisible="{Binding HasFormError}" />
                 <TextBox Text="{Binding FormDescription}"
                          Watermark="notes — why, where, what 'done' means…"
                          AcceptsReturn="True" TextWrapping="Wrap"
@@ -446,11 +496,15 @@
                                    Margin="0,10,0,0" />
                 </Grid>
 
-                <TextBox Watermark="class name" Text="{Binding NewSlotTitle}" />
+                <TextBox Watermark="class name (required)" Text="{Binding NewSlotTitle}"
+                         Classes.invalid="{Binding IsSlotTitleInvalid}" />
                 <AutoCompleteBox Watermark="course"
                                  Text="{Binding NewSlotCourse}"
                                  ItemsSource="{Binding KnownCourses}"
                                  FilterMode="Contains" />
+
+                <TextBlock Classes="formerror" Text="{Binding SlotError}"
+                           IsVisible="{Binding HasSlotError}" />
 
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
                     <Button Grid.Column="0" Content="cancel"
@@ -480,15 +534,20 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding AssessModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormAssessTitle}" Watermark="exam, essay, lab…" />
+                <TextBox Text="{Binding FormAssessTitle}" Watermark="exam, essay, lab… (required)"
+                         Classes.invalid="{Binding IsAssessTitleInvalid}" />
 
                 <Grid ColumnDefinitions="*,8,110">
                     <TextBox Grid.Column="0" Text="{Binding FormAssessCategory}"
                              Watermark="category"
                              ToolTip.Tip="optional — what drop rules target, e.g. quiz" />
                     <NumericUpDown Grid.Column="2" Value="{Binding FormAssessWeight}"
-                                   Watermark="weight %" Minimum="0.1" Maximum="100" FormatString="0.#" />
+                                   Watermark="weight %" Minimum="0.1" Maximum="100" FormatString="0.#"
+                                   Classes.invalid="{Binding IsAssessWeightInvalid}" />
                 </Grid>
+
+                <TextBlock Classes="formerror" Text="{Binding AssessError}"
+                           IsVisible="{Binding HasAssessError}" />
 
                 <Grid ColumnDefinitions="*,8,*">
                     <NumericUpDown Grid.Column="0" Value="{Binding FormAssessGrade}"
@@ -533,16 +592,21 @@
                        TextTrimming="CharacterEllipsis" />
 
             <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-                <Button Classes="icon" Content="⏮" FontSize="16"
+                <Button Classes="icon"
+                        AutomationProperties.Name="previous" Content="⏮" FontSize="16"
                         Command="{Binding PrevTrackCommand}" ToolTip.Tip="previous" />
-                <Button Classes="icon" Content="{Binding PlayPauseGlyph}" FontSize="18"
+                <Button Classes="icon"
+                        AutomationProperties.Name="play / pause" Content="{Binding PlayPauseGlyph}" FontSize="18"
                         Command="{Binding PlayPauseCommand}" ToolTip.Tip="play / pause" />
-                <Button Classes="icon" Content="⏭" FontSize="16"
+                <Button Classes="icon"
+                        AutomationProperties.Name="next" Content="⏭" FontSize="16"
                         Command="{Binding NextTrackCommand}" ToolTip.Tip="next" />
-                <Button Classes="icon" Content="⤮" FontSize="14"
+                <Button Classes="icon"
+                        AutomationProperties.Name="shuffle" Content="⤮" FontSize="14"
                         Classes.shuffleon="{Binding Shuffle}"
                         Command="{Binding ToggleShuffleCommand}" ToolTip.Tip="shuffle" />
-                <Button Classes="icon" Content="◼" FontSize="12"
+                <Button Classes="icon"
+                        AutomationProperties.Name="stop" Content="◼" FontSize="12"
                         Command="{Binding StopPlaybackCommand}" ToolTip.Tip="stop" />
             </StackPanel>
 
@@ -801,7 +865,8 @@
     <!-- Zen layout: timer only, everything else fades -->
     <Grid IsVisible="{Binding IsZenMode}" RowDefinitions="Auto,*,Auto" Margin="48">
 
-        <Button Grid.Row="0" Classes="icon" Content="✕" FontSize="18"
+        <Button Grid.Row="0" Classes="icon"
+                AutomationProperties.Name="esc · exit" Content="✕" FontSize="18"
                 HorizontalAlignment="Right" VerticalAlignment="Top"
                 Command="{Binding ExitZenCommand}"
                 ToolTip.Tip="esc · exit" />
@@ -873,6 +938,27 @@
             </Border>
         </StackPanel>
     </Grid>
+
+    <!-- Failure notice. Sits above the pages but under the splash, bound to
+         the static Notice rather than this view model: the file handlers that
+         raise it are in the page views, which have no path to the shell. -->
+    <Border Classes="notice"
+            IsVisible="{Binding Source={x:Static svc:Notice.Current}, Path=IsVisible}"
+            Classes.open="{Binding Source={x:Static svc:Notice.Current}, Path=IsVisible}"
+            VerticalAlignment="Bottom" HorizontalAlignment="Center"
+            Margin="0,0,0,22">
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding Source={x:Static svc:Notice.Current}, Path=Text}"
+                       TextWrapping="Wrap" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextBrush}" />
+            <Button Grid.Column="1" Classes="icon" Content="✕"
+                    Margin="10,0,0,0"
+                    AutomationProperties.Name="dismiss this message"
+                    ToolTip.Tip="dismiss"
+                    Command="{Binding Source={x:Static svc:Notice.Current}, Path=DismissCommand}" />
+        </Grid>
+    </Border>
 
     <!-- Launch splash: covers everything, the lamp fades up, then the
          overlay fades out to reveal the app. Last child = topmost. -->
