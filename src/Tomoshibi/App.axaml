@@ -18,6 +18,7 @@
             <conv:CourseColorConverter x:Key="CourseColor" />
             <conv:LowercaseConverter x:Key="Lower" />
             <conv:ZoneWidthConverter x:Key="ZoneWidth" />
+            <conv:ZoneColumnsConverter x:Key="ZoneColumns" />
         </ResourceDictionary>
     </Application.Resources>
 
