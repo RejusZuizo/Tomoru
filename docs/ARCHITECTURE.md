@@ -18,10 +18,14 @@ src/Tomoshibi/
   Services/      side effects + pure helpers behind interfaces:
                  IStorageService (JSON on disk), ISoundService (chime),
                  INotificationService (native alerts), IMusicService,
+                 PomodoroMachine (the timer's rules, no clock attached),
                  TaskTemplateParser (task code grammar), IcsImporter,
-                 DeckTsv (Anki-compatible deck import/export),
-                 ReminderService (deadline alerts), ReviewScheduler (spaced
-                 repetition), WeeklyRetrospective (the week written up),
+                 CsvCards + ApkgImporter (Anki text and .apkg collections),
+                 Fsrs + Scheduler (spaced repetition), CardGenerator,
+                 ClozeParser, OcclusionLayout, SearchQueryParser,
+                 ReminderService (deadline alerts),
+                 WeeklyRetrospective (the week written up),
+                 Guarded + Notice + ErrorLog (failures the user can read),
                  IGlobalHotkeyService (system-wide start/pause: Win32
                  RegisterHotKey / macOS Carbon / null on Linux),
                  GradeScale, ThemeService, DailyReset (midnight
@@ -30,8 +34,9 @@ src/Tomoshibi/
                  EmberSeal (the wallet's tamper stamp)
   ViewModels/    UI state and behaviour — the MainWindow shell plus one view
                  model per destination (Dashboard / Today / Timetable / Todo /
-                 Subjects / Stats / Review / Shop / Settings), and the Cmd-K
-                 command palette
+                 Subjects / Stats / Review / Shop / Settings), the Cmd-K
+                 command palette, and a few sub-models a page delegates to
+                 (GradeScaleViewModel, PomodoroViewModel, TaskTemplateViewModel)
   Views/         .axaml + thin code-behind (window-state, focus checks,
                  file pickers — things only the view layer can know)
   Styles/        Palette.axaml (tokens) + Controls.axaml (control styles)
@@ -134,23 +139,54 @@ before the window shows so there's no flash.
 
 ## Testing approach
 
-The pure logic is under xUnit tests: the grade engine, `TaskTemplateParser`
-(parse + the done-toggle source surgery), storage round-trip and crash
-recovery, the daily-reset/banking rules (`DailyReset`), the load-time
-migrations (`StateMigrations`), `IcsImporter`, `DeckTsv`,
-`WeeklyRetrospective` and `BackupRestore`. The daily reset and the
-migrations used to live inside the shell view model and were extracted into
-plain state-in/state-out services precisely so they could be tested.
+232 xUnit tests, all over pure logic: `PomodoroMachine`, the FSRS scheduler and
+review log, the grade engine, `TaskTemplateParser` (parse + the done-toggle
+source surgery), storage round-trip and crash recovery, the daily-reset/banking
+rules, the load-time migrations, `IcsImporter`, the deck readers and `.apkg`
+import, card generation, cloze and occlusion layout, the search query parser,
+the palette matcher and its frecency ordering, `EmberSeal`, `WeeklyRetrospective`
+and `BackupRestore`.
 
-The one candidate still untested is the Pomodoro state machine — it's
-entangled with `DispatcherTimer` and needs the same extraction treatment
-before tests can drive it.
+There's a pattern behind that list. Every one of them started life inside a view
+model and was pulled out into a plain state-in/state-out type *so that* it could
+be tested. The Pomodoro rules were the last and most stubborn: the phase logic
+was welded to a `DispatcherTimer`, so nothing could drive it. `PomodoroMachine`
+now holds the rules with time entering only through `Tick()`, and the view model
+is left with labels and a timer — which is why a test can run a whole study
+afternoon in a loop.
+
+What stays untested is the view models themselves, and that's a real gap rather
+than a principled position: a change like moving the grade scale out of
+`SubjectsViewModel` has to be verified by hand.
+
+## Failing in front of the user
+
+Three small pieces handle "something went wrong", because the app has no dialogs
+outside its own modals and nowhere else to put an error:
+
+- `Guarded.RunAsync` wraps the file-picker handlers. Those are `async void` —
+  unavoidably, since that's an event handler's signature — and an exception
+  after the first `await` in an `async void` goes to the dispatcher and kills
+  the process. Wrapping the body in a task that never faults makes awaiting it
+  safe.
+- `Notice` is the one-line banner it surfaces on, a single static instance
+  because the app is one window and threading a path to the shell through
+  fifteen file handlers isn't worth the wiring.
+- `ErrorLog` writes the detail next to `tomoshibi.json`, keeping crashes
+  (`crash-*.log`) and handled failures (`error-*.log`) in separate files so one
+  can't bury the other.
 
 ## Known limitations
 
 - Save-on-change rewrites the entire file. Fine at this scale; revisit only if
   the data grows a lot.
-- The package versions in the csproj are pinned to a known-good set and may
-  lag the latest Avalonia release; bump deliberately.
+- The package versions in the csproj are pinned to a known-good set and lag the
+  latest Avalonia release deliberately: Dependabot holds Avalonia at 11.x
+  because 12 is a breaking major, and `Avalonia.Diagnostics` carries its own
+  version property since it has no 12.x at all. The migration is planned in
+  v2.2; the ignore rule comes off on that branch.
 - `.ics` import reads times as wall-clock and only maps weekly recurrences;
   exotic RRULEs are counted and skipped.
+- The dashboard's paired cards use a `UniformGrid` to keep their heights level;
+  the agenda sits on its own full-width row because its height varies with the
+  week and would otherwise unbalance whichever column held it.
