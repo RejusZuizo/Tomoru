@@ -17,7 +17,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
-    <AvaloniaVersion>11.2.1</AvaloniaVersion>
+    <AvaloniaVersion>11.3.20</AvaloniaVersion>
     <!-- Avalonia.Diagnostics tracks its own version: it stops at 11.3.20 and
          has no 12.x at all, so sharing $(AvaloniaVersion) meant any bump past
          11.x asked NuGet for a package that doesn't exist — which killed the
