@@ -111,12 +111,14 @@
                                             Command="{Binding $parent[ItemsControl].((vm:ReviewViewModel)DataContext).OpenDeckCommand}"
                                             CommandParameter="{Binding}" />
                                     <Button Grid.Column="3" Classes="icon"
+                                            AutomationProperties.Name="deck options"
                                             ToolTip.Tip="deck options"
                                             Command="{Binding $parent[ItemsControl].((vm:ReviewViewModel)DataContext).OpenDeckOptionsCommand}"
                                             CommandParameter="{Binding}">
                                         <materialIcons:MaterialIcon Kind="Cog" Width="16" Height="16" />
                                     </Button>
                                     <Button Grid.Column="4" Classes="icon"
+                                            AutomationProperties.Name="delete deck"
                                             ToolTip.Tip="delete deck"
                                             Command="{Binding $parent[ItemsControl].((vm:ReviewViewModel)DataContext).DeleteDeckCommand}"
                                             CommandParameter="{Binding}">
@@ -138,14 +140,16 @@
                         <TextBlock Text="// 新しいデッキ · new deck" Classes="jp" />
                         <Grid ColumnDefinitions="*,140,Auto">
                             <TextBox Grid.Column="0" Text="{Binding NewDeckName}"
-                                     Watermark="deck name…" FontSize="13" Padding="10,6">
+                                     Watermark="deck name… (required)" FontSize="13" Padding="10,6"
+                                     Classes.invalid="{Binding IsNewDeckNameInvalid}">
                                 <TextBox.KeyBindings>
                                     <KeyBinding Gesture="Enter" Command="{Binding AddDeckCommand}" />
                                 </TextBox.KeyBindings>
                             </TextBox>
                             <TextBox Grid.Column="1" Text="{Binding NewDeckCourse}"
                                      Watermark="course" Margin="6,0,0,0" FontSize="13" Padding="10,6" />
-                            <Button Grid.Column="2" Content="+" Classes="icon" Margin="4,0,0,0"
+                            <Button Grid.Column="2" Content="+" Classes="icon"
+                                    AutomationProperties.Name="add deck" Margin="4,0,0,0"
                                     Command="{Binding AddDeckCommand}" />
                         </Grid>
                         <TextBlock Text="tag a deck with a course code to tie it to a subject"
@@ -161,7 +165,8 @@
             <StackPanel Spacing="16" Margin="28,4,28,28" MaxWidth="{StaticResource PageMaxWidth}">
 
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                    <Button Grid.Column="0" Classes="icon" Content="←" FontSize="18"
+                    <Button Grid.Column="0" Classes="icon"
+                            AutomationProperties.Name="back to decks · esc" Content="←" FontSize="18"
                             VerticalAlignment="Top" Margin="0,2,8,0"
                             Command="{Binding CloseDeckCommand}"
                             ToolTip.Tip="back to decks · esc" />
@@ -205,7 +210,8 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="mi:MaterialIconKind">
-                                        <Button Classes="icon" Width="34" Height="30" Padding="0"
+                                        <Button Classes="icon"
+                                                AutomationProperties.Name="choose this deck icon" Width="34" Height="30" Padding="0"
                                                 Margin="0,0,4,4"
                                                 Command="{Binding $parent[ItemsControl].((vm:DeckViewModel)DataContext).SetIconCommand}"
                                                 CommandParameter="{Binding}">
@@ -274,7 +280,8 @@
                                                 <Button Grid.Column="2" Classes="seg" Content="edit"
                                                         Command="{Binding $parent[ItemsControl].((vm:DeckViewModel)DataContext).EditNoteCommand}"
                                                         CommandParameter="{Binding}" />
-                                                <Button Grid.Column="3" Classes="icon" Content="✕"
+                                                <Button Grid.Column="3" Classes="icon"
+                                                        AutomationProperties.Name="delete note" Content="✕"
                                                         FontSize="11" Padding="4,2" Margin="4,0,0,0"
                                                         ToolTip.Tip="delete note"
                                                         Command="{Binding $parent[ItemsControl].((vm:DeckViewModel)DataContext).DeleteNoteCommand}"
@@ -466,7 +473,8 @@
             <!-- header + search + bulk bar (hidden while editing a note) -->
             <StackPanel Grid.Row="0" Spacing="10" IsVisible="{Binding !IsEditing}">
                 <Grid ColumnDefinitions="Auto,*">
-                    <Button Classes="icon" Content="←" FontSize="18" VerticalAlignment="Top"
+                    <Button Classes="icon"
+                            AutomationProperties.Name="back to decks · esc" Content="←" FontSize="18" VerticalAlignment="Top"
                             Command="{Binding #BrowserRoot.((vm:ReviewViewModel)DataContext).CloseBrowserCommand}"
                             ToolTip.Tip="back to decks · esc" />
                     <StackPanel Grid.Column="1" Spacing="2" Margin="8,0,0,0">
@@ -568,7 +576,8 @@
                             <TextBlock Text="// デッキ設定 · deck options" Classes="jp" />
                             <TextBlock Text="{Binding DeckName}" Classes="caption" />
                         </StackPanel>
-                        <Button Grid.Column="1" Classes="icon" Content="✕"
+                        <Button Grid.Column="1" Classes="icon"
+                                AutomationProperties.Name="close deck options" Content="✕"
                                 Command="{Binding #BrowserRoot.((vm:ReviewViewModel)DataContext).CloseDeckOptionsCommand}" />
                     </Grid>
 
@@ -649,6 +658,7 @@
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Text="// アンキ · import anki deck" Classes="jp" VerticalAlignment="Center" />
                     <Button Grid.Column="1" Classes="icon"
+                            AutomationProperties.Name="close the anki import"
                             Command="{Binding #BrowserRoot.((vm:ReviewViewModel)DataContext).CloseApkgImportCommand}">
                         <materialIcons:MaterialIcon Kind="Close" Width="16" Height="16" />
                     </Button>

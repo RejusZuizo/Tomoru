@@ -40,3 +40,23 @@ public class ZoneWidthConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// The same breakpoint expressed as a column count for a <c>UniformGrid</c>:
+/// two cells side by side on a wide window, one below it.
+///
+/// A UniformGrid rather than a WrapPanel for the paired cards, because its
+/// cells share a height — the two end level with each other instead of each
+/// stopping wherever its own content runs out, which left a visible step and a
+/// pocket of dead space under the shorter one.
+/// </summary>
+public class ZoneColumnsConverter : IValueConverter
+{
+    private const double Breakpoint = 980;
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is double width && !double.IsNaN(width) && width >= Breakpoint ? 2 : 1;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

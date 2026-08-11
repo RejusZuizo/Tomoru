@@ -26,14 +26,16 @@
                  different heights in the line box and never line up. -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
                         VerticalAlignment="Center">
-                <Button Classes="icon" Width="34" Height="30" Padding="0"
+                <Button Classes="icon"
+                        AutomationProperties.Name="集中 · zen" Width="34" Height="30" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Command="{Binding ToggleZenCommand}"
                         ToolTip.Tip="集中 · zen">
                     <materialIcons:MaterialIcon Kind="Fullscreen" Width="19" Height="19" />
                 </Button>
 
-                <Button Classes="icon" Width="34" Height="30" Padding="0"
+                <Button Classes="icon"
+                        AutomationProperties.Name="設定 · settings" Width="34" Height="30" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         ToolTip.Tip="設定 · settings">
                 <materialIcons:MaterialIcon Kind="Cog" Width="19" Height="19" />
@@ -106,7 +108,8 @@
                                        VerticalAlignment="Center" />
                         </StackPanel>
                         <!-- Density toggle — a discreet corner glyph, not a button. -->
-                        <Button Grid.Column="1" Classes="icon" FontSize="15"
+                        <Button Grid.Column="1" Classes="icon"
+                                AutomationProperties.Name="simple / full timer" FontSize="15"
                                 VerticalAlignment="Top"
                                 Content="{Binding SimpleTimerGlyph}"
                                 Command="{Binding ToggleSimpleTimerCommand}"
@@ -271,7 +274,8 @@
                                           ToolTip.Tip="show / hide the .code editor"
                                           FontSize="12"
                                           Content="&lt;/&gt;" />
-                            <Button Grid.Column="2" Classes="icon" Content="+" FontSize="18"
+                            <Button Grid.Column="2" Classes="icon"
+                                    AutomationProperties.Name="add a task" Content="+" FontSize="18"
                                     Margin="2,0,0,0"
                                     Command="{Binding Tasks.OpenAddTaskCommand}"
                                     ToolTip.Tip="add a task" />

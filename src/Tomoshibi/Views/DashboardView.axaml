@@ -31,7 +31,7 @@
         </Border>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="16" Margin="28,8,28,28" MaxWidth="{StaticResource WidePageMaxWidth}">
+            <StackPanel x:Name="PageColumn" Spacing="16" Margin="20,8,20,28" MaxWidth="{StaticResource WidePageMaxWidth}">
 
                 <!-- Editor tab strip -->
                 <Grid ColumnDefinitions="Auto,Auto,*" Margin="0,0,0,2">
@@ -205,129 +205,123 @@
                     </Grid>
                 </Border>
 
-                <!-- Lower dashboard: two responsive columns. At or above the
-                     breakpoint the right zone sits beside the left; below it,
-                     it wraps underneath so the page reads as one column. Each
-                     zone's width comes from the WrapPanel's own width via the
-                     ZoneWidth converter — no code-behind. -->
-                <WrapPanel x:Name="DashZones">
-
-                    <!-- Left column: what's next, the week -->
-                    <StackPanel Margin="8,0,8,16" Spacing="16"
-                                Width="{Binding #DashZones.Bounds.Width, Converter={StaticResource ZoneWidth}}">
-
-                        <!-- Up next -->
-                        <Border Classes="card">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="// 次は · up next" Classes="jp" />
-                                <TextBlock Text="{Binding Today.NextClassLabel}" FontSize="13"
-                                           Foreground="{DynamicResource BlueBrush}"
-                                           IsVisible="{Binding Today.HasNextClass}" />
-                                <TextBlock Text="{Binding Today.DeadlinesLabel}" FontSize="13"
-                                           Foreground="{DynamicResource AmberBrush}"
-                                           TextWrapping="Wrap"
-                                           IsVisible="{Binding Today.HasUpcomingDeadlines}" />
-                                <TextBlock FontSize="13" Classes="caption">
-                                    <Run Text="{Binding Todo.OpenCount, Mode=OneWay}" />
-                                    <Run Text=" backlog · " />
-                                    <Run Text="{Binding Todo.DoingCount, Mode=OneWay}" />
-                                    <Run Text=" in progress" />
-                                </TextBlock>
-                                <Button Classes="accent" Content="start focusing"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding Today.Pomodoro.ToggleRunCommand}" />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- This week -->
-                        <Border Classes="card" IsVisible="{Binding HasAgenda}">
-                            <StackPanel Spacing="10">
-                                <TextBlock Text="// 今週 · this week" Classes="jp" />
-                                <ItemsControl ItemsSource="{Binding Agenda}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:AgendaDayViewModel">
-                                            <Grid ColumnDefinitions="110,*" Margin="0,4,0,0">
-                                                <TextBlock Grid.Column="0" Text="{Binding DayLabel}"
-                                                           Classes="caption" FontSize="13"
-                                                           VerticalAlignment="Top"
-                                                           Classes.today="{Binding IsToday}" />
-                                                <ItemsControl Grid.Column="1" ItemsSource="{Binding Entries}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="vm:AgendaEntryViewModel">
-                                                            <TextBlock Text="{Binding Text}" FontSize="13"
-                                                                       Margin="0,1,0,1" TextWrapping="Wrap"
-                                                                       Classes.agclass="{Binding IsClass}"
-                                                                       Classes.agdue="{Binding IsDue}"
-                                                                       Classes.agexam="{Binding IsExam}" />
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
+                <!-- Up next -->
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="// 次は · up next" Classes="jp" />
+                        <TextBlock Text="{Binding Today.NextClassLabel}" FontSize="13"
+                                   Foreground="{DynamicResource BlueBrush}"
+                                   IsVisible="{Binding Today.HasNextClass}" />
+                        <TextBlock Text="{Binding Today.DeadlinesLabel}" FontSize="13"
+                                   Foreground="{DynamicResource AmberBrush}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding Today.HasUpcomingDeadlines}" />
+                        <TextBlock FontSize="13" Classes="caption">
+                            <Run Text="{Binding Todo.OpenCount, Mode=OneWay}" />
+                            <Run Text=" backlog · " />
+                            <Run Text="{Binding Todo.DoingCount, Mode=OneWay}" />
+                            <Run Text=" in progress" />
+                        </TextBlock>
+                        <Button Classes="accent" Content="start focusing"
+                                HorizontalAlignment="Left"
+                                Command="{Binding Today.Pomodoro.ToggleRunCommand}" />
                     </StackPanel>
+                </Border>
 
-                    <!-- Right column: standing, what needs work -->
-                    <StackPanel Margin="8,0,8,16" Spacing="16"
-                                Width="{Binding #DashZones.Bounds.Width, Converter={StaticResource ZoneWidth}}">
+                <!-- Standing and needs-work, paired. A UniformGrid, not a
+                     WrapPanel: uniform cells make the two cards end level
+                     with each other. Columns collapse to one below the
+                     breakpoint, sized off the page column so the grid never
+                     measures against itself. -->
+                <UniformGrid Columns="{Binding #PageColumn.Bounds.Width, Converter={StaticResource ZoneColumns}}">
 
-                        <!-- Standing -->
-                        <Border Classes="card">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="// 成績 · standing" Classes="jp" />
-                                <TextBlock Text="{Binding Subjects.GpaLabel}" FontSize="20"
-                                           FontWeight="SemiBold" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Subjects.DegreeLabel}" Classes="caption"
-                                           IsVisible="{Binding Subjects.HasDegreeProjection}" />
-                                <TextBlock Text="{Binding Subjects.GpaCaption}" Classes="caption"
-                                           TextWrapping="Wrap"
-                                           IsVisible="{Binding Subjects.GpaCaption, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-                        </Border>
+                    <!-- Standing -->
+                    <Border Classes="card" Margin="8,0,8,16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="// 成績 · standing" Classes="jp" />
+                            <TextBlock Text="{Binding Subjects.GpaLabel}" FontSize="20"
+                                       FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Subjects.DegreeLabel}" Classes="caption"
+                                       IsVisible="{Binding Subjects.HasDegreeProjection}" />
+                            <TextBlock Text="{Binding Subjects.GpaCaption}" Classes="caption"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding Subjects.GpaCaption, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </Border>
 
-                        <!-- Needs work -->
-                        <Border Classes="card">
-                            <StackPanel Spacing="10">
-                                <TextBlock Text="// 要努力 · needs work" Classes="jp" />
+                    <!-- Needs work -->
+                    <Border Classes="card" Margin="8,0,8,16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="// 要努力 · needs work" Classes="jp" />
 
-                                <ItemsControl ItemsSource="{Binding WeakSpots}" IsVisible="{Binding HasWeakSpots}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:WeakSpotViewModel">
-                                            <Border Classes="trow" Margin="0,2,0,0">
-                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                                    <Ellipse Grid.Column="0" Width="8" Height="8"
-                                                             VerticalAlignment="Center" Margin="2,0,10,0"
-                                                             Fill="{DynamicResource AmberBrush}"
-                                                             Classes="dotsev" Classes.severe="{Binding IsSevere}" />
-                                                    <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                                            <Border Classes="tag" VerticalAlignment="Center"
-                                                                    IsVisible="{Binding HasCode}">
-                                                                <TextBlock Text="{Binding Code}" Foreground="{Binding Code, Converter={StaticResource CourseColor}}" />
-                                                            </Border>
-                                                        </StackPanel>
-                                                        <TextBlock Text="{Binding Message}" Classes="caption" />
+                            <ItemsControl ItemsSource="{Binding WeakSpots}" IsVisible="{Binding HasWeakSpots}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:WeakSpotViewModel">
+                                        <Border Classes="trow" Margin="0,2,0,0">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <Ellipse Grid.Column="0" Width="8" Height="8"
+                                                         VerticalAlignment="Center" Margin="2,0,10,0"
+                                                         Fill="{DynamicResource AmberBrush}"
+                                                         Classes="dotsev" Classes.severe="{Binding IsSevere}" />
+                                                <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                        <Border Classes="tag" VerticalAlignment="Center"
+                                                                IsVisible="{Binding HasCode}">
+                                                            <TextBlock Text="{Binding Code}" Foreground="{Binding Code, Converter={StaticResource CourseColor}}" />
+                                                        </Border>
                                                     </StackPanel>
-                                                    <Button Grid.Column="2" Content="open" Classes="seg"
-                                                            Command="{Binding OpenCommand}" />
-                                                    <Button Grid.Column="3" Content="→ today" Classes="seg"
-                                                            Command="{Binding SendToTodayCommand}"
-                                                            ToolTip.Tip="drop a focus task on today" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                                    <TextBlock Text="{Binding Message}" Classes="caption" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Content="open" Classes="seg"
+                                                        Command="{Binding OpenCommand}" />
+                                                <Button Grid.Column="3" Content="→ today" Classes="seg"
+                                                        Command="{Binding SendToTodayCommand}"
+                                                        ToolTip.Tip="drop a focus task on today" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                                <TextBlock Text="{Binding WeakSpotsCaption}" Classes="caption" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </WrapPanel>
+                            <TextBlock Text="{Binding WeakSpotsCaption}" Classes="caption" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                    <!-- This week, full width. It used to sit in the left column,
+                     where a seven-day agenda ran well past the shorter right
+                     column and left a hole under "needs work". Alone on its own
+                     row its height stops mattering, and the day/entry split has
+                     room to breathe. -->
+                    <Border Classes="card" IsVisible="{Binding HasAgenda}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="// 今週 · this week" Classes="jp" />
+                            <ItemsControl ItemsSource="{Binding Agenda}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:AgendaDayViewModel">
+                                        <Grid ColumnDefinitions="110,*" Margin="0,4,0,0">
+                                            <TextBlock Grid.Column="0" Text="{Binding DayLabel}"
+                                                       Classes="caption" FontSize="13"
+                                                       VerticalAlignment="Top"
+                                                       Classes.today="{Binding IsToday}" />
+                                            <ItemsControl Grid.Column="1" ItemsSource="{Binding Entries}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:AgendaEntryViewModel">
+                                                        <TextBlock Text="{Binding Text}" FontSize="13"
+                                                                   Margin="0,1,0,1" TextWrapping="Wrap"
+                                                                   Classes.agclass="{Binding IsClass}"
+                                                                   Classes.agdue="{Binding IsDue}"
+                                                                   Classes.agexam="{Binding IsExam}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

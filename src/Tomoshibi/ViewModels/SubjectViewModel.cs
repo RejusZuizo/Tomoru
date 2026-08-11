@@ -36,6 +36,15 @@ public partial class SubjectViewModel : ViewModelBase
     [ObservableProperty] private string _newResourceTitle = string.Empty;
     [ObservableProperty] private string _newResourceUrl = string.Empty;
 
+    /// <summary>Outlines the link box when "add" was pressed on an empty one.</summary>
+    [ObservableProperty] private bool _isResourceUrlInvalid;
+
+    partial void OnNewResourceUrlChanged(string value)
+    {
+        if (IsResourceUrlInvalid && !string.IsNullOrWhiteSpace(value))
+            IsResourceUrlInvalid = false;
+    }
+
     // ---- Derived grade state (recomputed on every change) ----
     [ObservableProperty] private bool _hasGrade;
     [ObservableProperty] private string _gradeLabel = "—";
@@ -132,6 +141,36 @@ public partial class SubjectViewModel : ViewModelBase
     [ObservableProperty] private string _formAssessTitle = string.Empty;
     [ObservableProperty] private string _formAssessCategory = string.Empty;
     [ObservableProperty] private decimal? _formAssessWeight;
+
+    // ---- Assessment form validation ----
+    // Title and weight fail independently, so they light up independently.
+    [ObservableProperty] private bool _isAssessTitleInvalid;
+    [ObservableProperty] private bool _isAssessWeightInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAssessError))]
+    private string _assessError = string.Empty;
+
+    public bool HasAssessError => AssessError.Length > 0;
+
+    partial void OnFormAssessTitleChanged(string value)
+    {
+        if (IsAssessTitleInvalid && !string.IsNullOrWhiteSpace(value))
+            ClearAssessError();
+    }
+
+    partial void OnFormAssessWeightChanged(decimal? value)
+    {
+        if (IsAssessWeightInvalid && value is { } v && v > 0)
+            ClearAssessError();
+    }
+
+    private void ClearAssessError()
+    {
+        IsAssessTitleInvalid = false;
+        IsAssessWeightInvalid = false;
+        AssessError = string.Empty;
+    }
     [ObservableProperty] private decimal? _formAssessGrade;
     [ObservableProperty] private decimal? _formAssessWhatIf;
     [ObservableProperty] private DateTime? _formAssessDate;
@@ -140,6 +179,14 @@ public partial class SubjectViewModel : ViewModelBase
     // ---- Bulk paste (add a whole syllabus at once) ----
     [ObservableProperty] private bool _isBulkVisible;
     [ObservableProperty] private string _bulkText = string.Empty;
+
+    [ObservableProperty] private bool _isBulkTextInvalid;
+
+    partial void OnBulkTextChanged(string value)
+    {
+        if (IsBulkTextInvalid && !string.IsNullOrWhiteSpace(value))
+            IsBulkTextInvalid = false;
+    }
 
     public string Name => Model.Name;
     public string? Code => Model.Code;
@@ -189,7 +236,12 @@ public partial class SubjectViewModel : ViewModelBase
     {
         var url = NewResourceUrl?.Trim();
         if (string.IsNullOrWhiteSpace(url))
+        {
+            IsResourceUrlInvalid = true;
             return;
+        }
+
+        IsResourceUrlInvalid = false;
 
         // Be forgiving — a bare drive.google.com/… still opens once schemed.
         if (!url.Contains("://"))
@@ -254,8 +306,25 @@ public partial class SubjectViewModel : ViewModelBase
     private void SaveAssessment()
     {
         var title = FormAssessTitle?.Trim();
+
+        // Two separate reasons this can fail, and a user who typed a title
+        // would never guess the weight was the blocker — so name both. Kept as
+        // one condition so the compiler still narrows `title` and `w` below.
         if (string.IsNullOrWhiteSpace(title) || FormAssessWeight is not { } w || w <= 0)
+        {
+            IsAssessTitleInvalid = string.IsNullOrWhiteSpace(title);
+            IsAssessWeightInvalid = FormAssessWeight is not { } entered || entered <= 0;
+
+            AssessError = (IsAssessTitleInvalid, IsAssessWeightInvalid) switch
+            {
+                (true, true) => "an assessment needs a title and a weight above 0.",
+                (true, false) => "an assessment needs a title.",
+                _ => "the weight has to be above 0.",
+            };
             return;
+        }
+
+        ClearAssessError();
 
         var category = string.IsNullOrWhiteSpace(FormAssessCategory)
             ? null : FormAssessCategory.Trim().ToLowerInvariant();
@@ -328,7 +397,12 @@ public partial class SubjectViewModel : ViewModelBase
     private void AddBulk()
     {
         if (string.IsNullOrWhiteSpace(BulkText))
+        {
+            IsBulkTextInvalid = true;
             return;
+        }
+
+        IsBulkTextInvalid = false;
 
         var added = 0;
         foreach (var rawLine in BulkText.Split('\n'))

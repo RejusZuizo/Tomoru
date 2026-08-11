@@ -45,6 +45,7 @@ public partial class App : Application
                 _hotkey?.Dispose();
                 _vm?.FlushSave();
                 _vm?.Music.Shutdown();
+                _vm?.ShutdownMedia();
             };
 
             SetupTray(desktop);

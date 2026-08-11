@@ -53,6 +53,7 @@
                                 Content="list"
                                 Command="{Binding ShowListClassesCommand}" />
                         <Button Grid.Column="3" Classes="icon"
+                                AutomationProperties.Name="add a class slot"
                                 Content="+" FontSize="18" Margin="8,0,0,0"
                                 Command="{Binding OpenAddSlotCommand}"
                                 ToolTip.Tip="add a class slot" />
@@ -87,7 +88,8 @@
                                                        Foreground="{Binding Course, Converter={StaticResource CourseColor}}"
                                                        VerticalAlignment="Center" Margin="10,0,0,0"
                                                        IsVisible="{Binding HasCourse}" />
-                                            <Button Grid.Column="4" Content="✕" Classes="icon" Margin="8,0,0,0"
+                                            <Button Grid.Column="4" Content="✕" Classes="icon"
+                                                    AutomationProperties.Name="remove this class" Margin="8,0,0,0"
                                                     Command="{Binding $parent[ItemsControl].((vm:TimetableViewModel)DataContext).RemoveSlotCommand}"
                                                     CommandParameter="{Binding}" />
                                         </Grid>
@@ -160,6 +162,7 @@
                                                            TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
                                             <Button Content="✕" Classes="icon"
+                                                    AutomationProperties.Name="remove this class"
                                                     FontSize="10" Padding="2,0"
                                                     HorizontalAlignment="Right" VerticalAlignment="Top"
                                                     Opacity="0.35"
@@ -180,6 +183,7 @@
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="// 締切 · deadlines" Classes="jp" VerticalAlignment="Center" />
                         <Button x:Name="AddDeadlineButton" Grid.Column="1" Classes="icon"
+                                AutomationProperties.Name="add a deadline"
                                 Content="+" FontSize="18"
                                 Click="OnAddDeadlineOpen"
                                 ToolTip.Tip="add a deadline">
@@ -188,8 +192,11 @@
                                     <StackPanel Width="260" Spacing="10" Margin="8">
                                         <TextBlock Text="締切 · deadline" Classes="jp" />
                                         <CalendarDatePicker SelectedDate="{Binding NewDeadlineDate}" />
-                                        <TextBox Watermark="what's due?"
-                                                 Text="{Binding NewDeadlineTitle}" />
+                                        <TextBox Watermark="what's due? (required)"
+                                                 Text="{Binding NewDeadlineTitle}"
+                                                 Classes.invalid="{Binding IsDeadlineTitleInvalid}" />
+                                        <TextBlock Classes="formerror" Text="{Binding DeadlineError}"
+                                                   IsVisible="{Binding HasDeadlineError}" />
                                         <AutoCompleteBox Watermark="course"
                                                          Text="{Binding NewDeadlineCourse}"
                                                          ItemsSource="{Binding KnownCourses}"
@@ -227,7 +234,8 @@
                                                    Foreground="{Binding Course, Converter={StaticResource CourseColor}}"
                                                    VerticalAlignment="Center" Margin="10,0,0,0"
                                                    IsVisible="{Binding HasCourse}" />
-                                        <Button Grid.Column="4" Content="✕" Classes="icon" Margin="6,0,0,0"
+                                        <Button Grid.Column="4" Content="✕" Classes="icon"
+                                                AutomationProperties.Name="delete the ticket" Margin="6,0,0,0"
                                                 ToolTip.Tip="delete the ticket"
                                                 Command="{Binding $parent[ItemsControl].((vm:TimetableViewModel)DataContext).RemoveDeadlineCommand}"
                                                 CommandParameter="{Binding}" />

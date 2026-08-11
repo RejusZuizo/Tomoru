@@ -10,6 +10,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Tomoshibi.Controls;
+using Tomoshibi.Services;
 using Tomoshibi.ViewModels;
 
 namespace Tomoshibi.Views;
@@ -44,25 +45,26 @@ public partial class OcclusionEditorView : UserControl
     }
 
     private async void OnChooseImage(object? sender, RoutedEventArgs e)
-    {
-        if (_vm is null) return;
-        var top = TopLevel.GetTopLevel(this);
-        if (top is null) return;
-
-        var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        => await Guarded.RunAsync("open that image", async () =>
         {
-            Title = "choose an image to occlude",
-            AllowMultiple = false,
-            FileTypeFilter = new List<FilePickerFileType>
-            {
-                new("images") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp" } }
-            }
-        });
+            if (_vm is null) return;
+            var top = TopLevel.GetTopLevel(this);
+            if (top is null) return;
 
-        var path = files.FirstOrDefault()?.TryGetLocalPath();
-        if (!string.IsNullOrEmpty(path))
-            _vm.SetImage(path);
-    }
+            var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "choose an image to occlude",
+                AllowMultiple = false,
+                FileTypeFilter = new List<FilePickerFileType>
+                {
+                    new("images") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp" } }
+                }
+            });
+
+            var path = files.FirstOrDefault()?.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(path))
+                _vm.SetImage(path);
+        });
 
     private void Redraw()
     {

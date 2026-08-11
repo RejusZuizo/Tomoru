@@ -834,4 +834,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _saveTimer.Stop();
         _storage.Save(_state);
     }
+
+    /// <summary>Hand the native LibVLC instance and its audio player back on the
+    /// way out. Nothing else owns them, and libvlc holding the audio device
+    /// open is what makes an app look like it won't quit.</summary>
+    public void ShutdownMedia() => _mediaPlayback.Dispose();
 }

@@ -35,6 +35,14 @@ public partial class TodoItemViewModel : ViewModelBase
     [ObservableProperty]
     private string _newSubtaskTitle = string.Empty;
 
+    [ObservableProperty] private bool _isNewSubtaskInvalid;
+
+    partial void OnNewSubtaskTitleChanged(string value)
+    {
+        if (IsNewSubtaskInvalid && !string.IsNullOrWhiteSpace(value))
+            IsNewSubtaskInvalid = false;
+    }
+
     public ObservableCollection<SubtaskViewModel> Subtasks { get; } = new();
 
     // ---- Identity ----
@@ -160,7 +168,12 @@ public partial class TodoItemViewModel : ViewModelBase
     {
         var title = NewSubtaskTitle?.Trim();
         if (string.IsNullOrWhiteSpace(title))
+        {
+            IsNewSubtaskInvalid = true;
             return;
+        }
+
+        IsNewSubtaskInvalid = false;
 
         var sub = new Subtask { Title = title };
         Model.Subtasks.Add(sub);

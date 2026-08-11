@@ -18,6 +18,11 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
     <AvaloniaVersion>11.2.1</AvaloniaVersion>
+    <!-- Avalonia.Diagnostics tracks its own version: it stops at 11.3.20 and
+         has no 12.x at all, so sharing $(AvaloniaVersion) meant any bump past
+         11.x asked NuGet for a package that doesn't exist — which killed the
+         whole Dependabot run, not just this one package. -->
+    <AvaloniaDiagnosticsVersion>11.2.1</AvaloniaDiagnosticsVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +31,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
     <!-- Dev tooling: F12 inspector in Debug only -->
-    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)">
+    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaDiagnosticsVersion)">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />

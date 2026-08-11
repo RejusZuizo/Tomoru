@@ -10,6 +10,12 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    # Avalonia 12 is a breaking major, and Avalonia.Diagnostics never shipped
+    # for it — moving the UI across is a deliberate piece of work, not a
+    # dependency bump. Stay current on the 11.x line until it's planned in.
+    ignore:
+      - dependency-name: "Avalonia*"
+        update-types: ["version-update:semver-major"]
 
   # Keep the GitHub Actions in the CI/CodeQL workflows current too.
   - package-ecosystem: "github-actions"

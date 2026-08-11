@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Tomoshibi.Services;
 using Tomoshibi.ViewModels;
 
 namespace Tomoshibi.Views;
@@ -32,41 +33,42 @@ public partial class TimetableView : UserControl
     }
 
     private async void OnImportIcsClick(object? sender, RoutedEventArgs e)
-    {
-        if (Vm is not { } vm)
-            return;
-
-        var top = TopLevel.GetTopLevel(this);
-        if (top is null)
-            return;
-
-        var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        => await Guarded.RunAsync("import that calendar", async () =>
         {
-            Title = "import an .ics timetable",
-            AllowMultiple = false,
-            FileTypeFilter = new[]
+            if (Vm is not { } vm)
+                return;
+
+            var top = TopLevel.GetTopLevel(this);
+            if (top is null)
+                return;
+
+            var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                new FilePickerFileType("iCalendar") { Patterns = new[] { "*.ics" } }
+                Title = "import an .ics timetable",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("iCalendar") { Patterns = new[] { "*.ics" } }
+                }
+            });
+
+            if (files.Count == 0)
+                return;
+
+            await using var stream = await files[0].OpenReadAsync();
+
+            // A real timetable export is a few KB; refuse anything absurd rather
+            // than reading an unbounded (possibly downloaded) file into memory.
+            const long maxBytes = 5 * 1024 * 1024;
+            if (stream.CanSeek && stream.Length > maxBytes)
+            {
+                vm.ImportSummary = "that .ics is too large to import";
+                return;
             }
+
+            using var reader = new StreamReader(stream);
+            var text = await reader.ReadToEndAsync();
+
+            vm.ImportIcs(text);
         });
-
-        if (files.Count == 0)
-            return;
-
-        await using var stream = await files[0].OpenReadAsync();
-
-        // A real timetable export is a few KB; refuse anything absurd rather
-        // than reading an unbounded (possibly downloaded) file into memory.
-        const long maxBytes = 5 * 1024 * 1024;
-        if (stream.CanSeek && stream.Length > maxBytes)
-        {
-            vm.ImportSummary = "that .ics is too large to import";
-            return;
-        }
-
-        using var reader = new StreamReader(stream);
-        var text = await reader.ReadToEndAsync();
-
-        vm.ImportIcs(text);
-    }
 }
