@@ -10,7 +10,7 @@ namespace Tomoshibi;
 /// </summary>
 public static class ReleaseNotes
 {
-    public const string Version = "2.1.2";
+    public const string Version = "2.1.3";
 
     public static string VersionTag => $"v{Version}";
 
@@ -22,11 +22,12 @@ public static class ReleaseNotes
 
     private static readonly string[] Lines =
     {
-        "the review card frames its prompt at the top and answer at the bottom instead of floating them",
-        "opening a deck, a card or a subject now eases in and out instead of snapping",
-        "the dashboard fills a wide screen in two columns; the timetable grid stretches to match",
-        "tag chips follow the theme — no more dark chips in the light palette",
-        "the pomodoro header icons line up, and the little study-videos list is gone",
+        "an import or export that goes wrong now says so instead of closing the app",
+        "forms tell you why they wouldn't accept something, and outline the field",
+        "deleting a subject asks first, and says how many assessments go with it",
+        "icon buttons carry proper names now, so a screen reader can read them",
+        "the dashboard fills a wide screen without leaving a gap under the cards",
+        "linux gets a packaged build — no more building it yourself",
     };
 
     /// <summary>The notes as one bulleted block for the modal.</summary>

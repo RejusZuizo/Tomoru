@@ -16,6 +16,11 @@ PROJECT="$ROOT/src/Tomoshibi"
 DIST="$ROOT/dist"
 APP="$DIST/Tomoshibi.app"
 
+# Single source of truth for the version — the plist below used to hardcode
+# it and had drifted a release behind.
+VERSION="$(sed -n 's/.*Version = "\([0-9.]*\)".*/\1/p' "$PROJECT/ReleaseNotes.cs" | head -1)"
+[ -n "$VERSION" ] || { echo "couldn't read version from ReleaseNotes.cs"; exit 1; }
+
 RID="${1:-}"
 if [ -z "$RID" ]; then
   case "$(uname -m)" in
@@ -59,9 +64,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleIdentifier</key>      <string>dev.tomoshibi</string>
     <key>CFBundleExecutable</key>      <string>Tomoshibi</string>
     <key>CFBundleIconFile</key>        <string>icon</string>
-    <!-- Keep in step with ReleaseNotes.Version -->
-    <key>CFBundleVersion</key>         <string>2.0.0</string>
-    <key>CFBundleShortVersionString</key><string>2.0.0</string>
+    <key>CFBundleVersion</key>         <string>$VERSION</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>  <string>11.0</string>
     <key>NSHighResolutionCapable</key> <true/>
@@ -72,7 +76,13 @@ PLIST
 # Touch the bundle so Finder/Dock refreshes the icon cache for it.
 touch "$APP"
 
+ZIP="$DIST/Tomoshibi-mac-${RID#osx-}.zip"
+echo "▸ zipping ..."
+rm -f "$ZIP"
+ditto -c -k --keepParent "$APP" "$ZIP"
+
 echo
 echo "✓ $APP"
 echo "  drag it into /Applications, or:"
 echo "    open '$APP'"
+echo "✓ $ZIP  (the file to attach to a release)"
