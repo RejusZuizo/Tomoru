@@ -10,7 +10,7 @@ namespace Tomoshibi;
 /// </summary>
 public static class ReleaseNotes
 {
-    public const string Version = "2.1.3";
+    public const string Version = "2.2.0";
 
     public static string VersionTag => $"v{Version}";
 
@@ -22,12 +22,13 @@ public static class ReleaseNotes
 
     private static readonly string[] Lines =
     {
-        "an import or export that goes wrong now says so instead of closing the app",
-        "forms tell you why they wouldn't accept something, and outline the field",
-        "deleting a subject asks first, and says how many assessments go with it",
-        "icon buttons carry proper names now, so a screen reader can read them",
-        "the dashboard fills a wide screen without leaving a gap under the cards",
-        "linux gets a packaged build — no more building it yourself",
+        "tickets can repeat — daily, weekly, fortnightly or monthly; the next one appears when you finish this one",
+        "the backlog reads on two lines now, and the buttons say what they do",
+        "exams count down — \"in 26 days\" instead of a date to work out",
+        "the week grid fits your actual hours, so deadlines and exams aren't buried below it",
+        "a class at 11:30 sits halfway down the row instead of rounding to the hour",
+        "export your focus history as a spreadsheet",
+        "the app can follow your desktop's light / dark setting",
     };
 
     /// <summary>The notes as one bulleted block for the modal.</summary>

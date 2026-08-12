@@ -229,7 +229,13 @@ users get a stable build before anything churns underneath them.
 - [x] libvlc handed back at shutdown — `VlcMediaService` was disposable and
       never disposed
 
-### Avalonia, in two steps
+### Avalonia — moved to v2.3
+
+Kept out of this release deliberately: it's a breaking major across a heavily
+custom theme, and a regression from it shouldn't be confused with a bug in the
+features above.
+
+
 
 - [ ] **11.2.1 → 11.3.20 first.** Nineteen patch releases, no API change.
       Dependabot offers it now the NuGet job runs again. Land it, confirm
@@ -249,8 +255,20 @@ users get a stable build before anything churns underneath them.
 - [ ] Drop the Avalonia major-version ignore from `dependabot.yml` on the
       migration branch
 
-### The small ones, pulled out of Later
+### Features
 
+- [x] **Recurring tickets** — daily / weekly / fortnightly / monthly. The next
+      occurrence is created when the current one is finished, not by the
+      calendar, so an untouched repeat never multiplies
+- [x] **Exam countdowns** — "in 26 days" rather than a date to do arithmetic on
+- [x] **Focus history export** — sixty days of sessions and minutes had no way
+      out but the JSON
+- [x] **Follow the desktop's light/dark setting**, live rather than at launch
+- [x] **The week grid fits its hours** — a fixed 08–22 buried the deadlines and
+      exams below six rows of empty evening. Blocks are placed by real time
+      now, so an 11:30 class draws halfway down the row
+- [x] **The backlog reads properly** — two-line rows, labelled form fields,
+      and buttons that say "edit" rather than ✎
 - [ ] **Palette content beyond titles** — search descriptions and course codes
       too, so "MATH201" finds every row that touches the course. (The fuzzy,
       typo-tolerant matching itself shipped in v2.0.)

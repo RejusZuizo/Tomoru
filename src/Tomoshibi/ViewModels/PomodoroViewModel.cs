@@ -110,9 +110,6 @@ public partial class PomodoroViewModel : ViewModelBase
     {
         if (value)
         {
-            // TEMP DIAGNOSTIC — remove once the auto-start is found.
-            Tomoshibi.Services.ErrorLog.Handled(
-                "DEBUG: timer started", new System.Exception(System.Environment.StackTrace));
 
             _spinTimer.Start();
         }
