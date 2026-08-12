@@ -63,67 +63,85 @@
 
                                     <!-- Row line -->
                                     <Border Classes="trow">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                                        <Button Grid.Column="0" Classes="icon"
+                                    <!-- Two lines, not twelve columns. Title, number
+                                         and the actions on the first; everything that
+                                         describes the ticket — due, priority, progress,
+                                         effort, repeat, course — on a quieter second one.
+                                         Cramming it into one line squeezed the title
+                                         until it broke mid-word, and the metadata read
+                                         as noise around it. Same shape the subjects page
+                                         moved to in v2.1.1. -->
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
+                                          RowDefinitions="Auto,Auto">
+                                        <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Classes="icon"
                                                 AutomationProperties.Name="show / hide details" Content="{Binding ChevronGlyph}"
-                                                FontSize="11" Padding="4,2"
+                                                FontSize="11" Padding="4,2" VerticalAlignment="Center"
                                                 Command="{Binding ToggleExpandedCommand}"
                                                 ToolTip.Tip="show / hide details" />
-                                        <Button Grid.Column="1" Classes="icon status"
+                                        <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Classes="icon status"
                                                 AutomationProperties.Name="{Binding StatusTip}"
                                                 Classes.doing="{Binding IsDoing}"
                                                 Classes.donestat="{Binding IsDone}"
                                                 Content="{Binding StatusGlyph}" FontSize="14"
+                                                VerticalAlignment="Center"
                                                 Command="{Binding CycleStatusCommand}"
                                                 ToolTip.Tip="{Binding StatusTip}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding NumberLabel}"
+                                        <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Text="{Binding NumberLabel}"
                                                    Classes="caption" VerticalAlignment="Center"
                                                    MinWidth="32" Margin="2,0,8,0" />
-                                        <TextBlock Grid.Column="3" Text="{Binding Title}"
+                                        <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Title}"
                                                    Classes.done="{Binding IsDone}"
                                                    VerticalAlignment="Center" TextWrapping="Wrap" />
-                                        <TextBlock Grid.Column="4" Text="{Binding DueLabel}"
-                                                   Classes="caption" Margin="8,0,0,0"
-                                                   Classes.overdue="{Binding IsOverdue}"
-                                                   VerticalAlignment="Center"
-                                                   IsVisible="{Binding HasDue}" />
-                                        <Border Grid.Column="5" Classes="tag prio" Margin="8,0,0,0"
-                                                Classes.high="{Binding IsHighPriority}"
-                                                IsVisible="{Binding HasPriorityChip}">
-                                            <TextBlock Text="{Binding PriorityLabel}" />
-                                        </Border>
-                                        <TextBlock Grid.Column="6" Text="{Binding SubtaskProgress}"
-                                                   Classes="caption" Margin="8,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   IsVisible="{Binding HasSubtasks}" />
-                                        <TextBlock Grid.Column="7" Text="{Binding EffortLabel}"
-                                                   Classes="caption" Margin="8,0,0,0"
-                                                   Classes.overest="{Binding IsOverEstimate}"
-                                                   VerticalAlignment="Center"
-                                                   ToolTip.Tip="focus sessions spent / estimated"
-                                                   IsVisible="{Binding HasEffort}" />
-                                        <TextBlock Grid.Column="7" Text="{Binding RepeatLabel}"
-                                                   Classes="caption" Margin="8,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   ToolTip.Tip="the next one appears when this is done"
-                                                   IsVisible="{Binding Repeats}" />
-                                        <Border Grid.Column="8" Classes="tag" Margin="8,0,0,0"
-                                                IsVisible="{Binding HasCourse}">
-                                            <TextBlock Text="{Binding Course}" Foreground="{Binding Course, Converter={StaticResource CourseColor}}" />
-                                        </Border>
-                                        <Button Grid.Column="9" Content="→" Classes="icon"
-                                                AutomationProperties.Name="send to today" Margin="4,0,0,0"
-                                                ToolTip.Tip="send to today"
-                                                Command="{Binding $parent[ItemsControl].((vm:TodoViewModel)DataContext).SendToTodayCommand}"
-                                                CommandParameter="{Binding}" />
-                                        <Button Grid.Column="10" Content="✎" Classes="icon"
-                                                AutomationProperties.Name="edit"
-                                                ToolTip.Tip="edit"
-                                                Click="OnEditClick" />
-                                        <Button Grid.Column="11" Content="✕" Classes="icon"
-                                                AutomationProperties.Name="delete this ticket"
-                                                Command="{Binding $parent[ItemsControl].((vm:TodoViewModel)DataContext).RemoveCommand}"
-                                                CommandParameter="{Binding}" />
+
+                                        <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="4"
+                                                    Orientation="Horizontal"
+                                                    Spacing="4" VerticalAlignment="Center">
+                                            <Button Content="→ today" Classes="seg"
+                                                    AutomationProperties.Name="send to today"
+                                                    ToolTip.Tip="put this on today's plan"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TodoViewModel)DataContext).SendToTodayCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="edit" Classes="seg"
+                                                    AutomationProperties.Name="edit this ticket"
+                                                    ToolTip.Tip="edit this ticket"
+                                                    Click="OnEditClick" />
+                                            <Button Content="✕" Classes="icon"
+                                                    AutomationProperties.Name="delete this ticket"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TodoViewModel)DataContext).RemoveCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+
+                                        <!-- The describing line -->
+                                        <StackPanel Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2"
+                                                    Orientation="Horizontal" Spacing="10"
+                                                    Margin="0,3,0,0">
+                                            <TextBlock Text="{Binding DueLabel}" Classes="caption"
+                                                       Classes.overdue="{Binding IsOverdue}"
+                                                       VerticalAlignment="Center"
+                                                       IsVisible="{Binding HasDue}" />
+                                            <Border Classes="tag prio"
+                                                    Classes.high="{Binding IsHighPriority}"
+                                                    IsVisible="{Binding HasPriorityChip}">
+                                                <TextBlock Text="{Binding PriorityLabel}" />
+                                            </Border>
+                                            <TextBlock Text="{Binding SubtaskProgress}" Classes="caption"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip.Tip="checklist steps done"
+                                                       IsVisible="{Binding HasSubtasks}" />
+                                            <TextBlock Text="{Binding EffortLabel}" Classes="caption"
+                                                       Classes.overest="{Binding IsOverEstimate}"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip.Tip="focus blocks spent / estimated"
+                                                       IsVisible="{Binding HasEffort}" />
+                                            <TextBlock Text="{Binding RepeatLabel}" Classes="caption"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip.Tip="the next one appears when this is done"
+                                                       IsVisible="{Binding Repeats}" />
+                                            <Border Classes="tag" IsVisible="{Binding HasCourse}">
+                                                <TextBlock Text="{Binding Course}"
+                                                           Foreground="{Binding Course, Converter={StaticResource CourseColor}}" />
+                                            </Border>
+                                        </StackPanel>
                                     </Grid>
                                     </Border>
 

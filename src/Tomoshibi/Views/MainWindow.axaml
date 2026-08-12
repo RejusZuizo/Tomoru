@@ -391,47 +391,74 @@
             Classes.open="{Binding Todo.IsModalOpen}"
             Background="#A0000000">
         <Border Classes="card modal-card"
-                Width="420" Padding="22"
+                Width="560" Padding="26"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 DataContext="{Binding Todo}"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1" />
             </Border.RenderTransform>
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="14">
                 <TextBlock Text="{Binding ModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormTitle}" Watermark="what needs doing? (required)"
-                         Classes.invalid="{Binding IsFormTitleInvalid}" />
-                <TextBlock Classes="formerror" Text="{Binding FormError}"
-                           IsVisible="{Binding HasFormError}" />
-                <TextBox Text="{Binding FormDescription}"
-                         Watermark="notes — why, where, what 'done' means…"
-                         AcceptsReturn="True" TextWrapping="Wrap"
-                         MinHeight="84" VerticalContentAlignment="Top" />
+                <!-- Every field is labelled rather than leaning on a watermark:
+                     a watermark disappears the moment you type, so the form
+                     stops explaining itself exactly when you're filling it in. -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="what needs doing?" Classes="key" />
+                    <TextBox Text="{Binding FormTitle}"
+                             Watermark="e.g. finish the problem set"
+                             Classes.invalid="{Binding IsFormTitleInvalid}" />
+                    <TextBlock Classes="formerror" Text="{Binding FormError}"
+                               IsVisible="{Binding HasFormError}" />
+                </StackPanel>
 
-                <Grid ColumnDefinitions="*,8,*">
-                    <AutoCompleteBox Grid.Column="0" Text="{Binding FormCourse}"
-                                     ItemsSource="{Binding KnownCourses}"
-                                     FilterMode="Contains" Watermark="course" />
-                    <CalendarDatePicker Grid.Column="2" SelectedDate="{Binding FormDue}"
-                                        Watermark="due" />
+                <StackPanel Spacing="5">
+                    <TextBlock Text="notes" Classes="key" />
+                    <TextBox Text="{Binding FormDescription}"
+                             Watermark="why it matters, where it lives, what &apos;done&apos; looks like…"
+                             AcceptsReturn="True" TextWrapping="Wrap"
+                             MinHeight="92" VerticalContentAlignment="Top" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,12,*">
+                    <StackPanel Grid.Column="0" Spacing="5">
+                        <TextBlock Text="course" Classes="key" />
+                        <AutoCompleteBox Text="{Binding FormCourse}"
+                                         ItemsSource="{Binding KnownCourses}"
+                                         FilterMode="Contains" Watermark="e.g. MATH201" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="5">
+                        <TextBlock Text="due date" Classes="key" />
+                        <CalendarDatePicker SelectedDate="{Binding FormDue}"
+                                            HorizontalAlignment="Stretch" />
+                    </StackPanel>
                 </Grid>
 
-                <Grid ColumnDefinitions="*,8,*">
-                    <ComboBox Grid.Column="0" ItemsSource="{Binding Priorities}"
-                              SelectedItem="{Binding FormPriority}"
-                              HorizontalAlignment="Stretch">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding, Converter={StaticResource Lower}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <NumericUpDown Grid.Column="2" Value="{Binding FormEstimate}"
-                                   Watermark="est. sessions"
-                                   Minimum="1" Maximum="50" FormatString="0" />
+                <Grid ColumnDefinitions="*,12,*">
+                    <StackPanel Grid.Column="0" Spacing="5">
+                        <TextBlock Text="priority" Classes="key" />
+                        <ComboBox ItemsSource="{Binding Priorities}"
+                                  SelectedItem="{Binding FormPriority}"
+                                  HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding, Converter={StaticResource Lower}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="5">
+                        <TextBlock Text="how many focus blocks?" Classes="key" />
+                        <NumericUpDown Value="{Binding FormEstimate}"
+                                       Watermark="e.g. 3" HorizontalAlignment="Stretch"
+                                       Minimum="1" Maximum="50" FormatString="0"
+                                       AutomationProperties.Name="estimated focus blocks" />
+                    </StackPanel>
                 </Grid>
+
+                <TextBlock Text="# one focus block is a pomodoro — 25 minutes by default"
+                           Classes="comment" TextWrapping="Wrap" />
 
                 <!-- Repeat: the next one is created when this is finished, so a
                      ticket you haven't touched never multiplies. -->
