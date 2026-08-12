@@ -31,7 +31,19 @@ public partial class App : Application
             _vm = new MainWindowViewModel(storage);
 
             // Apply the saved theme before the window shows so there's no flash.
-            ThemeService.Apply(_vm.ActiveThemeId);
+            ThemeService.Apply(_vm.FollowSystemTheme
+                ? ThemeService.SystemThemeId()
+                : _vm.ActiveThemeId);
+
+            // Re-dress when the desktop flips light/dark, so an app that's open
+            // all evening follows the machine into the night rather than
+            // staying whatever it was at launch.
+            if (PlatformSettings is { } settings)
+                settings.ColorValuesChanged += (_, _) =>
+                {
+                    if (_vm?.FollowSystemTheme == true)
+                        ThemeService.Apply(ThemeService.SystemThemeId());
+                };
 
             desktop.MainWindow = new MainWindow { DataContext = _vm };
 

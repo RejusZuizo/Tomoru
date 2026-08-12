@@ -157,6 +157,10 @@
                             </Grid>
                             <CheckBox IsChecked="{Binding ShowWelcome}"
                                       Content="greet me on launch" />
+                            <CheckBox IsChecked="{Binding FollowSystemTheme}"
+                                      Content="follow my desktop's light / dark setting" />
+                            <TextBlock Text="# switches with your system, including while the app is open — turn off to keep a theme from the shop"
+                                       Classes="comment" TextWrapping="Wrap" />
                             <CheckBox IsChecked="{Binding CloseToTray}"
                                       Content="keep running in the tray when the window closes" />
                             <TextBlock Text="# with this off, closing the window quits the app (and the timer)"
@@ -353,11 +357,16 @@
                                 <Button Classes="seg" Content="grades (.csv)"
                                         Click="OnExportGrades"
                                         ToolTip.Tip="every subject and assessment as a spreadsheet" />
-                                <Button Classes="seg" Content="timetable (.ics)"
+                                <Button Classes="seg" Content="calendar (.ics)"
                                         Click="OnExportTimetable"
+                                        AutomationProperties.Name="export calendar"
                                         ToolTip.Tip="classes, exams and deadlines for your calendar app" />
+                                <Button Classes="seg" Content="focus history (.csv)"
+                                        Click="OnExportFocus"
+                                        AutomationProperties.Name="export focus history"
+                                        ToolTip.Tip="every day's sessions, minutes and cards reviewed" />
                             </StackPanel>
-                            <TextBlock Text="# grades open in excel / sheets · the calendar drops into google / apple calendar"
+                            <TextBlock Text="# spreadsheets open in excel / sheets · the calendar carries your classes, exams and deadlines into google / apple calendar"
                                        Classes="comment" />
                         </StackPanel>
                     </Border>

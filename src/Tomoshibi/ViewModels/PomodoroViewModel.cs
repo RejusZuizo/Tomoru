@@ -110,6 +110,7 @@ public partial class PomodoroViewModel : ViewModelBase
     {
         if (value)
         {
+
             _spinTimer.Start();
         }
         else

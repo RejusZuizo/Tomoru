@@ -7,6 +7,38 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
+## [2.2.0] - 2026-08-12
+
+### Added
+
+- Tickets repeat — daily, weekly, fortnightly or monthly. The next occurrence
+  is created when the current one is finished rather than by the calendar, so
+  an untouched repeat never multiplies.
+- Exams read as countdowns ("in 26 days") rather than as dates.
+- Focus history exports as a CSV: every day's sessions, minutes, cards
+  reviewed, and the split by course.
+- The app can follow the desktop's light/dark setting, switching while it's
+  open rather than only at launch. Off by default.
+
+### Changed
+
+- The week grid fits the hours you actually have instead of a fixed 08:00–22:00,
+  so the deadlines and upcoming exams are no longer buried below rows of empty
+  evening. Classes are placed by real time, so an 11:30 class draws halfway
+  down the row rather than rounding to the hour.
+- Backlog tickets are two lines: title and actions on the first, everything
+  describing the ticket on a quieter second. The edit and send-to-today buttons
+  say "edit" and "→ today" rather than ✎ and →.
+- The ticket form is wider and every field is labelled; "est. sessions" is now
+  "how many focus blocks?" with a note that one block is a 25-minute pomodoro.
+- The timetable export is called "calendar" — it has always carried exams and
+  due-dated tickets as well as classes, but nothing said so.
+
+### Fixed
+
+- Clearing an hour or minute box in the class editor threw an
+  InvalidCastException at the user.
+
 ## [Unreleased]
 
 ### Added

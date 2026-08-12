@@ -33,6 +33,9 @@ public class TodoItem
     /// title is active. Closes the loop on the estimate.</summary>
     public int SessionsSpent { get; set; }
 
+    /// <summary>How often this comes back once it's done. None = one-off.</summary>
+    public RepeatRule Repeat { get; set; } = RepeatRule.None;
+
     public List<Subtask> Subtasks { get; set; } = new();
 
     /// <summary>Kept in sync with Status for backwards compatibility with

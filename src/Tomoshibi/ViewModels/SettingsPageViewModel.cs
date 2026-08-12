@@ -40,6 +40,11 @@ public partial class SettingsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _closeToTray;
 
+    /// <summary>Track the desktop's light/dark preference rather than a fixed
+    /// theme.</summary>
+    [ObservableProperty]
+    private bool _followSystemTheme;
+
     [ObservableProperty]
     private bool _remindersEnabled;
 
@@ -117,6 +122,7 @@ public partial class SettingsPageViewModel : ViewModelBase
 
         _showWelcome = state.ShowWelcome;
         _closeToTray = state.CloseToTray;
+        _followSystemTheme = state.FollowSystemTheme;
         _remindersEnabled = state.RemindersEnabled;
         _sleepReminderEnabled = state.SleepReminderEnabled;
         _hideFrontOnReveal = state.ReviewHideFrontOnReveal;
@@ -152,6 +158,15 @@ public partial class SettingsPageViewModel : ViewModelBase
     partial void OnShowWelcomeChanged(bool value)
     {
         _state.ShowWelcome = value;
+        _save();
+    }
+
+    partial void OnFollowSystemThemeChanged(bool value)
+    {
+        _state.FollowSystemTheme = value;
+        // Apply immediately — a theme setting that waits for a restart to show
+        // you what it did isn't really a setting.
+        ThemeService.Apply(value ? ThemeService.SystemThemeId() : _state.ActiveThemeId);
         _save();
     }
 
@@ -309,6 +324,44 @@ public partial class SettingsPageViewModel : ViewModelBase
             AllDay(t.Due!.Value, $"due: {t.Title}");
 
         Line("END:VCALENDAR");
+        return sb.ToString();
+    }
+
+    /// <summary>Every recorded day as a spreadsheet: date, sessions, minutes,
+    /// cards reviewed, and the minutes split by course. Sixty days of study
+    /// history existed but the only way out of it was reading the JSON.</summary>
+    public string BuildFocusCsv()
+    {
+        var courses = _state.History
+            .SelectMany(h => h.FocusByCourse.Keys)
+            .Concat(_state.Today.FocusByCourse.Keys)
+            .Distinct()
+            .OrderBy(c => c, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var sb = new StringBuilder();
+        sb.Append("date,sessions,minutes,cards_reviewed");
+        foreach (var c in courses)
+            sb.Append(',').Append(Csv(c));
+        sb.AppendLine();
+
+        // Today isn't in History until the midnight rollover banks it, so add
+        // it explicitly — exporting at 11pm shouldn't silently drop the day
+        // you've just spent working.
+        foreach (var day in _state.History.Append(_state.Today).OrderBy(d => d.Date))
+        {
+            sb.Append(day.Date.ToString("yyyy-MM-dd", Inv)).Append(',')
+              .Append(day.CompletedSessions.ToString(Inv)).Append(',')
+              .Append(day.FocusedMinutes.ToString("0.#", Inv)).Append(',')
+              .Append(day.ReviewedCards.ToString(Inv));
+
+            foreach (var c in courses)
+                sb.Append(',').Append(day.FocusByCourse.TryGetValue(c, out var m)
+                    ? m.ToString("0.#", Inv) : "0");
+
+            sb.AppendLine();
+        }
+
         return sb.ToString();
     }
 

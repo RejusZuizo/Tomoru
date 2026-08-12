@@ -17,6 +17,7 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:CourseColorConverter x:Key="CourseColor" />
             <conv:LowercaseConverter x:Key="Lower" />
+            <conv:RepeatWordConverter x:Key="RepeatWord" />
             <conv:ZoneWidthConverter x:Key="ZoneWidth" />
             <conv:ZoneColumnsConverter x:Key="ZoneColumns" />
         </ResourceDictionary>
