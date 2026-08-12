@@ -433,6 +433,20 @@
                                    Minimum="1" Maximum="50" FormatString="0" />
                 </Grid>
 
+                <!-- Repeat: the next one is created when this is finished, so a
+                     ticket you haven't touched never multiplies. -->
+                <ComboBox ItemsSource="{Binding RepeatOptions}"
+                          SelectedItem="{Binding FormRepeat}"
+                          HorizontalAlignment="Stretch"
+                          AutomationProperties.Name="how often this repeats"
+                          ToolTip.Tip="the next one appears when you mark this done">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding, Converter={StaticResource RepeatWord}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
                     <Button Grid.Column="0" Content="cancel"
                             HorizontalAlignment="Stretch"

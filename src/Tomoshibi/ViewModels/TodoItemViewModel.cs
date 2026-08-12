@@ -4,6 +4,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Tomoshibi.Models;
+using Tomoshibi.Services;
 
 namespace Tomoshibi.ViewModels;
 
@@ -129,15 +130,24 @@ public partial class TodoItemViewModel : ViewModelBase
         }
     }
 
-    public TodoItemViewModel(TodoItem model, Action save, Action saveAndResort)
+    public TodoItemViewModel(TodoItem model, Action save, Action saveAndResort,
+                             Action<TodoItem>? completed = null)
     {
         Model = model;
         _save = save;
         _saveAndResort = saveAndResort;
+        _completed = completed;
 
         foreach (var sub in model.Subtasks)
             Wrap(sub);
     }
+
+    private readonly Action<TodoItem>? _completed;
+
+    /// <summary>Whether this ticket comes back once it's done.</summary>
+    public bool Repeats => Model.Repeat != RepeatRule.None;
+
+    public string RepeatLabel => Recurrence.Label(Model.Repeat);
 
     /// <summary>○ → ◐ → ● → ○. Done stamps CompletedAt; leaving done clears it.</summary>
     [RelayCommand]
@@ -150,8 +160,14 @@ public partial class TodoItemViewModel : ViewModelBase
             _ => TodoStatus.Backlog
         };
 
-        Model.IsDone = Model.Status == TodoStatus.Done;
-        Model.CompletedAt = Model.Status == TodoStatus.Done ? DateTimeOffset.Now : null;
+        var justFinished = Model.Status == TodoStatus.Done;
+        Model.IsDone = justFinished;
+        Model.CompletedAt = justFinished ? DateTimeOffset.Now : null;
+
+        // A repeating ticket earns its next occurrence by being finished, not
+        // by the calendar rolling over — so an untouched one never multiplies.
+        if (justFinished)
+            _completed?.Invoke(Model);
 
         OnPropertyChanged(nameof(IsDone));
         OnPropertyChanged(nameof(IsDoing));

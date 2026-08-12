@@ -5,6 +5,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Tomoshibi.Models;
+using Tomoshibi.Services;
 
 namespace Tomoshibi.ViewModels;
 
@@ -91,6 +92,10 @@ public partial class TodoViewModel : ViewModelBase
     [ObservableProperty] private DateTime? _formDue;
     [ObservableProperty] private TodoPriority _formPriority = TodoPriority.Normal;
     [ObservableProperty] private decimal? _formEstimate;
+    [ObservableProperty] private RepeatRule _formRepeat = RepeatRule.None;
+
+    /// <summary>Repeat options for the form's picker.</summary>
+    public IReadOnlyList<RepeatRule> RepeatOptions { get; } = Enum.GetValues<RepeatRule>();
 
     public TodoViewModel(AppState state, Action save, Action<TodoItem> sendToToday)
     {
@@ -146,6 +151,7 @@ public partial class TodoViewModel : ViewModelBase
         FormCourse = string.Empty;
         FormDue = null;
         FormPriority = TodoPriority.Normal;
+        FormRepeat = RepeatRule.None;
         FormEstimate = null;
 
         ModalTitle = "新しいやること · new todo";
@@ -177,6 +183,7 @@ public partial class TodoViewModel : ViewModelBase
         FormCourse = row.Model.Course ?? string.Empty;
         FormDue = row.Model.Due is { } d ? d.ToDateTime(TimeOnly.MinValue) : null;
         FormPriority = row.Model.Priority;
+        FormRepeat = row.Model.Repeat;
         FormEstimate = row.Model.EstimatePomos > 0 ? row.Model.EstimatePomos : null;
 
         ModalTitle = $"編集 · edit {row.NumberLabel}";
@@ -207,6 +214,7 @@ public partial class TodoViewModel : ViewModelBase
         target.Course = string.IsNullOrWhiteSpace(FormCourse) ? null : FormCourse.Trim();
         target.Due = FormDue is { } d ? DateOnly.FromDateTime(d) : null;
         target.Priority = FormPriority;
+        target.Repeat = FormRepeat;
         target.EstimatePomos = FormEstimate is { } e ? (int)e : 0;
 
         if (_editing is null)
@@ -258,6 +266,21 @@ public partial class TodoViewModel : ViewModelBase
     partial void OnFilterChanged(TodoFilter value) => Rebuild();
     partial void OnSearchTextChanged(string value) => Rebuild();
 
+    /// <summary>A repeating ticket has just been finished — put its next
+    /// occurrence on the backlog. The page owns the list and the numbering, so
+    /// the row hands the finished ticket back rather than doing this itself.</summary>
+    private void SpawnRepeat(TodoItem finished)
+    {
+        var next = Recurrence.Next(finished, _state.NextTodoNumber, DateOnly.FromDateTime(DateTime.Now));
+        if (next is null)
+            return;
+
+        _state.NextTodoNumber++;
+        _state.Todos.Add(next);
+        Rebuild();
+        _save();
+    }
+
     /// <summary>Re-filter, re-sort and re-wrap. Doing first, then backlog,
     /// then done; high priority first within a status, then due date (none
     /// last), then ticket number. Expansion survives rebuilds by id.</summary>
@@ -297,7 +320,7 @@ public partial class TodoViewModel : ViewModelBase
 
         foreach (var model in sorted)
         {
-            var row = new TodoItemViewModel(model, _save, OnRowNeedsResort)
+            var row = new TodoItemViewModel(model, _save, OnRowNeedsResort, SpawnRepeat)
             {
                 IsExpanded = expanded.Contains(model.Id)
             };

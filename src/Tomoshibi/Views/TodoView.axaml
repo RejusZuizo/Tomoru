@@ -102,6 +102,11 @@
                                                    VerticalAlignment="Center"
                                                    ToolTip.Tip="focus sessions spent / estimated"
                                                    IsVisible="{Binding HasEffort}" />
+                                        <TextBlock Grid.Column="7" Text="{Binding RepeatLabel}"
+                                                   Classes="caption" Margin="8,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip.Tip="the next one appears when this is done"
+                                                   IsVisible="{Binding Repeats}" />
                                         <Border Grid.Column="8" Classes="tag" Margin="8,0,0,0"
                                                 IsVisible="{Binding HasCourse}">
                                             <TextBlock Text="{Binding Course}" Foreground="{Binding Course, Converter={StaticResource CourseColor}}" />
