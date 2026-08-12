@@ -73,16 +73,27 @@
                                          moved to in v2.1.1. -->
                                     <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
                                           RowDefinitions="Auto,Auto">
+                                        <!-- ▸ and ○ have different metrics, so matching
+                                             font sizes isn't enough to line them up. Equal
+                                             square boxes with the glyph centred in each is
+                                             what actually makes them agree. -->
                                         <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Classes="icon"
-                                                AutomationProperties.Name="show / hide details" Content="{Binding ChevronGlyph}"
-                                                FontSize="11" Padding="4,2" VerticalAlignment="Center"
+                                                AutomationProperties.Name="show / hide details"
+                                                Content="{Binding ChevronGlyph}"
+                                                Width="26" Height="26" Padding="0" FontSize="12"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                VerticalAlignment="Center"
                                                 Command="{Binding ToggleExpandedCommand}"
                                                 ToolTip.Tip="show / hide details" />
                                         <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Classes="icon status"
                                                 AutomationProperties.Name="{Binding StatusTip}"
                                                 Classes.doing="{Binding IsDoing}"
                                                 Classes.donestat="{Binding IsDone}"
-                                                Content="{Binding StatusGlyph}" FontSize="14"
+                                                Content="{Binding StatusGlyph}"
+                                                Width="26" Height="26" Padding="0" FontSize="14"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Command="{Binding CycleStatusCommand}"
                                                 ToolTip.Tip="{Binding StatusTip}" />
