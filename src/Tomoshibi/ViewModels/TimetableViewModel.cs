@@ -86,25 +86,25 @@ public partial class TimetableViewModel : ViewModelBase
 
     // Hour/minute spinners in the modal bind here; each rebuilds the TimeSpan
     // so the rest of the form keeps reading NewSlotStart / NewSlotEnd.
-    public decimal StartHour
+    public decimal? StartHour
     {
         get => NewSlotStart.Hours;
-        set => NewSlotStart = new TimeSpan((int)Math.Clamp(value, 0, 23), NewSlotStart.Minutes, 0);
+        set { if (value is { } v) NewSlotStart = new TimeSpan((int)Math.Clamp(v, 0, 23), NewSlotStart.Minutes, 0); }
     }
-    public decimal StartMinute
+    public decimal? StartMinute
     {
         get => NewSlotStart.Minutes;
-        set => NewSlotStart = new TimeSpan(NewSlotStart.Hours, (int)Math.Clamp(value, 0, 59), 0);
+        set { if (value is { } v) NewSlotStart = new TimeSpan(NewSlotStart.Hours, (int)Math.Clamp(v, 0, 59), 0); }
     }
-    public decimal EndHour
+    public decimal? EndHour
     {
         get => NewSlotEnd.Hours;
-        set => NewSlotEnd = new TimeSpan((int)Math.Clamp(value, 0, 23), NewSlotEnd.Minutes, 0);
+        set { if (value is { } v) NewSlotEnd = new TimeSpan((int)Math.Clamp(v, 0, 23), NewSlotEnd.Minutes, 0); }
     }
-    public decimal EndMinute
+    public decimal? EndMinute
     {
         get => NewSlotEnd.Minutes;
-        set => NewSlotEnd = new TimeSpan(NewSlotEnd.Hours, (int)Math.Clamp(value, 0, 59), 0);
+        set { if (value is { } v) NewSlotEnd = new TimeSpan(NewSlotEnd.Hours, (int)Math.Clamp(v, 0, 59), 0); }
     }
 
     partial void OnNewSlotStartChanged(TimeSpan value)
@@ -151,6 +151,48 @@ public partial class TimetableViewModel : ViewModelBase
         SlotError = string.Empty;
     }
 
+    // ---- Week grid window ----
+    // Measured from the timetable rather than fixed at 08–22: an empty evening
+    // rendered as hours of blank rows, pushing the deadlines and the exams
+    // below it off the screen.
+    private const int MinHours = 6;
+
+    private int _gridStart = ClassSlotItemViewModel.DefaultStartHour;
+    private int _gridEnd = ClassSlotItemViewModel.DefaultEndHour;
+
+    /// <summary>Hour labels down the left edge — one per row, and the thing
+    /// that gives the grid its height.</summary>
+    public ObservableCollection<string> HourLabels { get; } = new();
+
+    /// <summary>Re-measure the window around whatever is scheduled, with an
+    /// hour of air either side, then rebuild every slot against it. A slot's
+    /// offset is derived from the window, so they all move together.</summary>
+    private void RebuildSlots()
+    {
+        if (_state.ClassSlots.Count == 0)
+        {
+            _gridStart = ClassSlotItemViewModel.DefaultStartHour;
+            _gridEnd = ClassSlotItemViewModel.DefaultEndHour;
+        }
+        else
+        {
+            var earliest = _state.ClassSlots.Min(s => s.Start.Hour);
+            // A slot ending at 16:00 occupies the 15 row, so 16 is the first
+            // hour it no longer needs.
+            var latest = _state.ClassSlots.Max(s => Math.Max(s.Start.Hour + 1, s.End.Hour));
+            _gridStart = Math.Clamp(earliest - 1, 0, 23);
+            _gridEnd = Math.Clamp(latest + 1, _gridStart + MinHours, 24);
+        }
+
+        HourLabels.Clear();
+        for (var h = _gridStart; h < _gridEnd; h++)
+            HourLabels.Add(h.ToString("00"));
+
+        Slots.Clear();
+        foreach (var slot in _state.ClassSlots.OrderBy(s => s.Day).ThenBy(s => s.Start))
+            Slots.Add(new ClassSlotItemViewModel(slot, _gridStart, _gridEnd));
+    }
+
     /// <summary>The seven weekdays as picker options for the new-slot form.</summary>
     public IReadOnlyList<WeekDay> WeekDays { get; } = Enum.GetValues<WeekDay>();
 
@@ -160,8 +202,7 @@ public partial class TimetableViewModel : ViewModelBase
         _save = save;
         _classesView = _state.ClassesView;
 
-        foreach (var slot in _state.ClassSlots.OrderBy(s => s.Day).ThenBy(s => s.Start))
-            Slots.Add(new ClassSlotItemViewModel(slot));
+        RebuildSlots();
 
         RefreshDeadlines();
         RebuildKnownCourses();
@@ -315,7 +356,7 @@ public partial class TimetableViewModel : ViewModelBase
             var row = Slots.FirstOrDefault(r => r.Model == editing);
             if (row is not null)
                 Slots.Remove(row);
-            InsertSorted(Slots, new ClassSlotItemViewModel(editing), CompareSlots);
+            RebuildSlots();
         }
         else
         {
@@ -329,7 +370,7 @@ public partial class TimetableViewModel : ViewModelBase
             };
 
             _state.ClassSlots.Add(model);
-            InsertSorted(Slots, new ClassSlotItemViewModel(model), CompareSlots);
+            RebuildSlots();
         }
 
         CancelEdits();
@@ -377,7 +418,7 @@ public partial class TimetableViewModel : ViewModelBase
                 continue;
 
             _state.ClassSlots.Add(slot);
-            InsertSorted(Slots, new ClassSlotItemViewModel(slot), CompareSlots);
+            RebuildSlots();
             added++;
         }
 
@@ -430,7 +471,7 @@ public partial class TimetableViewModel : ViewModelBase
             CancelEdits();
 
         _state.ClassSlots.Remove(item.Model);
-        Slots.Remove(item);
+        RebuildSlots();
 
         RebuildKnownCourses();
         UpdateFlags();

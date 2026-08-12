@@ -12,11 +12,18 @@ namespace Tomoshibi.ViewModels;
 /// </summary>
 public class ClassSlotItemViewModel : ViewModelBase
 {
-    /// <summary>First hour rendered as a row in the week grid.</summary>
-    public const int GridStartHour = 8;
+    /// <summary>Fallback window when there's nothing scheduled to measure.</summary>
+    public const int DefaultStartHour = 8;
+    public const int DefaultEndHour = 22;
 
-    /// <summary>Last hour rendered as a row in the week grid (inclusive label).</summary>
-    public const int GridEndHour = 22;
+    /// <summary>Height of one hour row. Blocks are placed by offset from the
+    /// top of the grid rather than by Grid.Row: the window can move when the
+    /// timetable changes, and re-defining rows under a live panel doesn't
+    /// re-apply the row assignments of the children already in it.</summary>
+    public const double RowHeight = 38;
+
+    private readonly int _gridStart;
+    private readonly int _gridEnd;
 
     public ClassSlot Model { get; }
 
@@ -40,23 +47,31 @@ public class ClassSlotItemViewModel : ViewModelBase
     /// <summary>0..6, Mon..Sun. Used as the grid column for slot placement.</summary>
     public int DayIndex => (int)Model.Day;
 
-    /// <summary>0-based row in the grid (0 = the 8 o'clock row).</summary>
-    public int HourRow => Math.Clamp(Model.Start.Hour - GridStartHour,
-                                     0, GridEndHour - GridStartHour - 1);
+    /// <summary>Hours from the top of the grid to this slot's start — the real
+    /// time, not rounded to the hour, so an 11:30 class draws halfway down the
+    /// 11 row. The old row-based placement couldn't express that.</summary>
+    private double StartOffsetHours =>
+        Math.Clamp(Model.Start.ToTimeSpan().TotalHours - _gridStart,
+                   0, Math.Max(0, _gridEnd - _gridStart));
 
-    /// <summary>How many hour rows the block spans; floors and ceilings to the
-    /// nearest hour and clamps so a slot never overflows the grid.</summary>
-    public int HourSpan
-    {
-        get
-        {
-            var hours = Math.Max(1, (int)Math.Ceiling((Model.End - Model.Start).TotalHours));
-            return Math.Min(hours, GridEndHour - GridStartHour - HourRow);
-        }
-    }
+    private double EndOffsetHours =>
+        Math.Clamp(Model.End.ToTimeSpan().TotalHours - _gridStart,
+                   StartOffsetHours, Math.Max(0, _gridEnd - _gridStart));
 
-    public ClassSlotItemViewModel(ClassSlot model)
+    /// <summary>Distance from the top of the day column to this block.</summary>
+    public Avalonia.Thickness BlockMargin => new(0, StartOffsetHours * RowHeight, 0, 0);
+
+    /// <summary>How tall the block renders — its real duration, with a floor so
+    /// a fifteen-minute slot is still readable.</summary>
+    public double BlockHeight =>
+        Math.Max(RowHeight * 0.6, (EndOffsetHours - StartOffsetHours) * RowHeight);
+
+    public ClassSlotItemViewModel(ClassSlot model,
+                                  int gridStart = DefaultStartHour,
+                                  int gridEnd = DefaultEndHour)
     {
         Model = model;
+        _gridStart = gridStart;
+        _gridEnd = gridEnd;
     }
 }
