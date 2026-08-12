@@ -25,6 +25,15 @@
             <StackPanel Grid.Column="0" Spacing="2">
                 <TextBlock Text="セクション · sections" Classes="navsection" Margin="14,0,0,6" />
 
+                <Button Classes="confnav" Classes.active="{Binding IsGeneralSection}"
+                        Command="{Binding SelectSectionCommand}" CommandParameter="general">
+                    <Grid ColumnDefinitions="12,*">
+                        <TextBlock Text="›" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MatchaBrush}"
+                                   IsVisible="{Binding IsGeneralSection}" />
+                        <TextBlock Grid.Column="1" Classes="cjk"><Run Text="一般" /><Run Text="  general" Foreground="{DynamicResource MutedTextBrush}" /></TextBlock>
+                    </Grid>
+                </Button>
                 <Button Classes="confnav" Classes.active="{Binding IsTimerSection}"
                         Command="{Binding SelectSectionCommand}" CommandParameter="timer">
                     <Grid ColumnDefinitions="12,*">
@@ -32,15 +41,6 @@
                                    Foreground="{DynamicResource MatchaBrush}"
                                    IsVisible="{Binding IsTimerSection}" />
                         <TextBlock Grid.Column="1" Classes="cjk"><Run Text="タイマー" /><Run Text="  timer" Foreground="{DynamicResource MutedTextBrush}" /></TextBlock>
-                    </Grid>
-                </Button>
-                <Button Classes="confnav" Classes.active="{Binding IsStartupSection}"
-                        Command="{Binding SelectSectionCommand}" CommandParameter="startup">
-                    <Grid ColumnDefinitions="12,*">
-                        <TextBlock Text="›" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource MatchaBrush}"
-                                   IsVisible="{Binding IsStartupSection}" />
-                        <TextBlock Grid.Column="1" Classes="cjk"><Run Text="起動" /><Run Text="  startup" Foreground="{DynamicResource MutedTextBrush}" /></TextBlock>
                     </Grid>
                 </Button>
                 <Button Classes="confnav" Classes.active="{Binding IsRemindersSection}"
@@ -148,39 +148,48 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Startup & window -->
-                    <Border Classes="card" IsVisible="{Binding IsStartupSection}">
+                    <!-- General -->
+                    <Border Classes="card" IsVisible="{Binding IsGeneralSection}">
                         <StackPanel Spacing="10">
                             <Grid ColumnDefinitions="Auto,*">
-                                <TextBlock Text="// 起動 · startup &amp; window" Classes="jp" />
+                                <TextBlock Text="// 一般 · general" Classes="jp" />
                                 <Border Grid.Column="1" Classes="rule" />
                             </Grid>
-                            <CheckBox IsChecked="{Binding ShowWelcome}"
-                                      Content="greet me on launch" />
+                            <TextBlock Text="appearance" Classes="key" />
                             <CheckBox IsChecked="{Binding FollowSystemTheme}"
                                       Content="follow my desktop's light / dark setting" />
                             <TextBlock Text="# switches with your system, including while the app is open — turn off to keep a theme from the shop"
                                        Classes="comment" TextWrapping="Wrap" />
+
+                            <TextBlock Text="on launch" Classes="key" Margin="0,6,0,0" />
+                            <CheckBox IsChecked="{Binding ShowWelcome}"
+                                      Content="greet me on launch" />
+                            <CheckBox IsChecked="{Binding UpdateCheckEnabled}"
+                                      Content="check for updates" />
+                            <TextBlock Text="# one quiet ask of github for the latest version number — nothing about you rides along · off keeps tomoshibi fully offline"
+                                       Classes="comment" TextWrapping="Wrap" />
+
+                            <TextBlock Text="window" Classes="key" Margin="0,6,0,0" />
                             <CheckBox IsChecked="{Binding CloseToTray}"
                                       Content="keep running in the tray when the window closes" />
                             <TextBlock Text="# with this off, closing the window quits the app (and the timer)"
-                                       Classes="comment" />
+                                       Classes="comment" TextWrapping="Wrap" />
+
+                            <TextBlock Text="shortcuts" Classes="key" Margin="0,6,0,0" />
                             <CheckBox IsChecked="{Binding GlobalHotkeyEnabled}"
                                       IsEnabled="{Binding HotkeySupported}"
-                                      Content="global start/pause hotkey" />
-                            <TextBlock Text="{Binding HotkeyHint}" Classes="comment" />
+                                      Content="start / pause from any app" />
+                            <TextBlock Text="{Binding HotkeyHint}" Classes="comment" TextWrapping="Wrap" />
                             <TextBlock Text="{Binding HotkeyStatus}" Classes="comment"
-                                       Foreground="{DynamicResource AmberBrush}"
+                                       Foreground="{DynamicResource AmberBrush}" TextWrapping="Wrap"
                                        IsVisible="{Binding HotkeyStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            <CheckBox IsChecked="{Binding UpdateCheckEnabled}"
-                                      Content="check for updates on launch" />
-                            <TextBlock Text="# one quiet ask of github for the latest version number — nothing about you rides along · off keeps tomoshibi fully offline"
-                                       Classes="comment" />
+
+                            <TextBlock Text="help" Classes="key" Margin="0,6,0,0" />
                             <Button Classes="seg" Content="show the tour"
-                                    HorizontalAlignment="Left" Margin="0,4,0,0"
+                                    HorizontalAlignment="Left"
                                     Command="{Binding ShowTourCommand}"
                                     ToolTip.Tip="the four-page primer from first launch" />
-                            <TextBlock Text="# themes live in the shop now"
+                            <TextBlock Text="# themes live in the shop"
                                        Classes="comment" />
                         </StackPanel>
                     </Border>

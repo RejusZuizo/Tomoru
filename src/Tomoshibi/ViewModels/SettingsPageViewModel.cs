@@ -79,16 +79,16 @@ public partial class SettingsPageViewModel : ViewModelBase
     /// the Is*Section helpers light the matching nav item and show its card.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimerSection))]
-    [NotifyPropertyChangedFor(nameof(IsStartupSection))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralSection))]
     [NotifyPropertyChangedFor(nameof(IsRemindersSection))]
     [NotifyPropertyChangedFor(nameof(IsReviewSection))]
     [NotifyPropertyChangedFor(nameof(IsGradingSection))]
     [NotifyPropertyChangedFor(nameof(IsMusicSection))]
     [NotifyPropertyChangedFor(nameof(IsDataSection))]
-    private string _section = "timer";
+    private string _section = "general";
 
     public bool IsTimerSection => Section == "timer";
-    public bool IsStartupSection => Section == "startup";
+    public bool IsGeneralSection => Section == "general";
     public bool IsRemindersSection => Section == "reminders";
     public bool IsReviewSection => Section == "review";
     public bool IsGradingSection => Section == "grading";
