@@ -34,7 +34,7 @@
     <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaDiagnosticsVersion)">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Read Anki's SQLite collection for .apkg import (bundles native e_sqlite3). -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <!-- Material Design Icons (vector, theme-aware) for deck icons etc. -->
