@@ -27,6 +27,14 @@ public partial class SettingsPageView : UserControl
                     "csv", "*.csv", vm.BuildGradesCsv());
         });
 
+    private async void OnExportFocus(object? sender, RoutedEventArgs e)
+        => await Guarded.RunAsync("export your focus history", async () =>
+        {
+            if (Vm is { } vm)
+                await SaveText("export focus history", $"tomoshibi-focus-{DateTime.Now:yyyy-MM-dd}.csv",
+                    "csv", "*.csv", vm.BuildFocusCsv());
+        });
+
     private async void OnExportTimetable(object? sender, RoutedEventArgs e)
         => await Guarded.RunAsync("export your timetable", async () =>
         {

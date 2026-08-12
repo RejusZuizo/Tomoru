@@ -196,6 +196,9 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Read by App at startup to apply the saved theme.</summary>
     public string ActiveThemeId => _state.ActiveThemeId;
 
+    /// <summary>Whether the app tracks the desktop's light/dark setting.</summary>
+    public bool FollowSystemTheme => _state.FollowSystemTheme;
+
     /// <summary>The view model the main content area is currently bound to.
     /// Resolved through <see cref="ViewLocator"/> to the right view.</summary>
     public ViewModelBase ActiveContent => ActiveDestination switch

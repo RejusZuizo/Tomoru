@@ -94,6 +94,13 @@ public class AppState
     public bool CloseToTray { get; set; } = true;
     public bool LightTheme { get; set; }
 
+    /// <summary>Track the desktop's light/dark preference instead of holding a
+    /// fixed theme. For an app whose whole idea is the lamp you keep on at
+    /// night, dimming when the desktop does is the right default behaviour —
+    /// but it stays opt-in, because a bought theme shouldn't be overridden
+    /// without asking.</summary>
+    public bool FollowSystemTheme { get; set; }
+
     /// <summary>The system-wide start/pause chord (ctrl+alt+P / ⌃⌥P), on
     /// platforms that support one. Off releases the chord to other apps.</summary>
     public bool GlobalHotkeyEnabled { get; set; } = true;

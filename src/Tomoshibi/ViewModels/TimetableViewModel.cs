@@ -240,7 +240,10 @@ public partial class TimetableViewModel : ViewModelBase
                      .OrderBy(x => x.a.Date))
         {
             var date = $"{exam.Date:ddd MMM d}".ToLowerInvariant();
-            UpcomingExams.Add($"{date} · {exam.Title} — {subject.Code ?? subject.Name}");
+            // The countdown, not just the date — "in 26 days" is the part you
+            // were doing arithmetic to work out.
+            var away = DateWords.Countdown(exam.Date!.Value, today);
+            UpcomingExams.Add($"{date} · {exam.Title} — {subject.Code ?? subject.Name} · {away}");
         }
 
         HasUpcomingExams = UpcomingExams.Count > 0;

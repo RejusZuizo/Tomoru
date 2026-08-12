@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
+using Avalonia.Platform;
 using Avalonia.Media;
 using Avalonia.Styling;
 
@@ -79,6 +80,23 @@ public static class ThemeService
 
     public static AppTheme Find(string? id) =>
         All.FirstOrDefault(t => t.Id == id) ?? All[0];
+
+    /// <summary>What the desktop is currently set to, or null if the platform
+    /// won't say.</summary>
+    public static bool? SystemIsLight()
+        => Application.Current?.PlatformSettings?.GetColorValues().ThemeVariant
+            switch
+            {
+                PlatformThemeVariant.Light => true,
+                PlatformThemeVariant.Dark => false,
+                _ => null
+            };
+
+    /// <summary>The theme to wear when following the desktop: the plain light
+    /// or dark set. A paid theme is a deliberate choice, so following the
+    /// system means stepping back to the neutral pair rather than guessing
+    /// which purchased palette counts as "light enough".</summary>
+    public static string SystemThemeId() => SystemIsLight() == true ? "light" : "dark";
 
     public static void Apply(string? id)
     {
