@@ -257,11 +257,14 @@ users get a stable build before anything churns underneath them.
 - [ ] **Group-project awareness** — an optional owner on todo subtasks, so a
       shared project's split shows in the backlog without any sync or accounts
 
-### Ambient soundscapes
+### Ambient soundscapes — dropped
 
-- [ ] Rain / café / waves / night. Needs real audio assets — synthesis won't
-      cut it — so sourcing licensed loops is as much of the job as the code.
-      The LibVLC stack from the v2.1 flashcards rebuild already plays them
+- [ ] ~~Rain / café / waves / night.~~ **Cut from v2.2.** The blocker was never
+      the code — LibVLC has been able to play them since v2.1 — it's that no
+      licensed loops of usable quality turned up, and shipping something you
+      can't legally redistribute in a public release isn't a trade worth
+      making. The local-folder music player covers the same need with audio
+      the user already owns. Revisit only if assets appear.
 
 ## Later
 
