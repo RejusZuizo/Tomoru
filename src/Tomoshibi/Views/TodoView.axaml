@@ -67,6 +67,9 @@
                                          and the actions on the first; everything that
                                          describes the ticket — due, priority, progress,
                                          effort, repeat, course — on a quieter second one.
+                                         Everything on the first line centres against
+                                         that line, so the chevron, circle, number, title
+                                         and actions all share one baseline.
                                          Cramming it into one line squeezed the title
                                          until it broke mid-word, and the metadata read
                                          as noise around it. Same shape the subjects page
@@ -77,7 +80,7 @@
                                              font sizes isn't enough to line them up. Equal
                                              square boxes with the glyph centred in each is
                                              what actually makes them agree. -->
-                                        <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Classes="icon"
+                                        <Button Grid.Row="0" Grid.Column="0" Classes="icon"
                                                 AutomationProperties.Name="show / hide details"
                                                 Content="{Binding ChevronGlyph}"
                                                 Width="26" Height="26" Padding="0" FontSize="12"
@@ -86,7 +89,7 @@
                                                 VerticalAlignment="Center"
                                                 Command="{Binding ToggleExpandedCommand}"
                                                 ToolTip.Tip="show / hide details" />
-                                        <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Classes="icon status"
+                                        <Button Grid.Row="0" Grid.Column="1" Classes="icon status"
                                                 AutomationProperties.Name="{Binding StatusTip}"
                                                 Classes.doing="{Binding IsDoing}"
                                                 Classes.donestat="{Binding IsDone}"
@@ -97,14 +100,14 @@
                                                 VerticalAlignment="Center"
                                                 Command="{Binding CycleStatusCommand}"
                                                 ToolTip.Tip="{Binding StatusTip}" />
-                                        <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Text="{Binding NumberLabel}"
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding NumberLabel}"
                                                    Classes="caption" VerticalAlignment="Center"
                                                    MinWidth="32" Margin="2,0,8,0" />
                                         <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Title}"
                                                    Classes.done="{Binding IsDone}"
                                                    VerticalAlignment="Center" TextWrapping="Wrap" />
 
-                                        <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="4"
+                                        <StackPanel Grid.Row="0" Grid.Column="4"
                                                     Orientation="Horizontal"
                                                     Spacing="4" VerticalAlignment="Center">
                                             <Button Content="→ today" Classes="seg"
