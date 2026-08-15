@@ -17,7 +17,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
-    <AvaloniaVersion>11.3.20</AvaloniaVersion>
+    <AvaloniaVersion>12.0.0</AvaloniaVersion>
     <!-- Avalonia.Diagnostics tracks its own version: it stops at 11.3.20 and
          has no 12.x at all, so sharing $(AvaloniaVersion) meant any bump past
          11.x asked NuGet for a package that doesn't exist — which killed the
@@ -38,7 +38,7 @@
     <!-- Read Anki's SQLite collection for .apkg import (bundles native e_sqlite3). -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <!-- Material Design Icons (vector, theme-aware) for deck icons etc. -->
-    <PackageReference Include="Material.Icons.Avalonia" Version="2.1.10" />
+    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
     <!-- Embedded audio + video for flashcards (and a real Windows music
          backend). LibVLCSharp is the managed binding; the native libvlc comes
          from the per-OS packages below. -->
