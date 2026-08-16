@@ -112,16 +112,23 @@ public partial class MainWindow : Window
         if (e.Key != Key.Space)
             return;
 
+        // Space toggles the timer only where the timer is what you're looking
+        // at — the pomodoro page, or zen mode. It used to do so from anywhere,
+        // which is why the timer appeared to start "on its own": space is also
+        // how you scroll a page, so reading the dashboard or the backlog and
+        // tapping space silently started a focus block. Nothing on screen
+        // explained it, and it left the app running a session the user never
+        // asked for.
+        //
+        // The other single-key timer controls (r, s, z) were already scoped to
+        // the Today page; space was the one that wasn't. Away from the timer,
+        // space now does what every other app does with it: scroll.
+        if (!_vm.IsZenMode && _vm.ActiveDestination != Destination.Today)
+            return;
+
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
         if (_vm.AnyModalOpen)
-            return;
-        if (_vm.ActiveDestination == Destination.Review
-            && _vm.Review.IsReviewing && !_vm.Review.IsSessionDone)
-            return;
-        // In the card browser a focused row would otherwise turn space into a
-        // pomodoro toggle — leave space alone there.
-        if (_vm.ActiveDestination == Destination.Review && _vm.Review.IsBrowserOpen)
             return;
 
         _vm.Today.Pomodoro.ToggleRunCommand.Execute(null);

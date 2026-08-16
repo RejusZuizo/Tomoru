@@ -28,8 +28,13 @@ jobs:
         include:
           - os: ubuntu-latest
             script: ./scripts/pack-linux.sh
+          # macos-latest runners are Apple Silicon, so one mac job only ever
+          # produced an arm64 build and Intel Macs got a download that wouldn't
+          # run. Ask for both explicitly.
           - os: macos-latest
-            script: ./scripts/pack-mac.sh
+            script: ./scripts/pack-mac.sh osx-arm64
+          - os: macos-latest
+            script: ./scripts/pack-mac.sh osx-x64
           - os: windows-latest
             script: pwsh scripts/pack-win.ps1
 
@@ -61,7 +66,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.os }}
+          name: build-${{ matrix.os }}-${{ strategy.job-index }}
           path: out/
           if-no-files-found: error
 
