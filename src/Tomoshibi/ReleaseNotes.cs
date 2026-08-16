@@ -10,7 +10,7 @@ namespace Tomoshibi;
 /// </summary>
 public static class ReleaseNotes
 {
-    public const string Version = "2.2.0";
+    public const string Version = "2.2.1";
 
     public static string VersionTag => $"v{Version}";
 
@@ -22,13 +22,9 @@ public static class ReleaseNotes
 
     private static readonly string[] Lines =
     {
-        "tickets can repeat — daily, weekly, fortnightly or monthly; the next one appears when you finish this one",
-        "the backlog reads on two lines now, and the buttons say what they do",
-        "exams count down — \"in 26 days\" instead of a date to work out",
-        "the week grid fits your actual hours, so deadlines and exams aren't buried below it",
-        "a class at 11:30 sits halfway down the row instead of rounding to the hour",
-        "export your focus history as a spreadsheet",
-        "the app can follow your desktop's light / dark setting",
+        "space no longer starts the timer from other pages — it scrolls, like everywhere else",
+        "settings opens on a general section, with the app-wide options grouped",
+        "intel macs get their own build",
     };
 
     /// <summary>The notes as one bulleted block for the modal.</summary>
