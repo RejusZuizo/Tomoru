@@ -7,6 +7,25 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
+## [2.2.1] - 2026-08-16
+
+### Fixed
+
+- The pomodoro appeared to start on its own. Space toggled the timer from any
+  page, and space is also how you scroll — so reading the dashboard or the
+  backlog and tapping space silently began a focus block. It now toggles only
+  on the pomodoro page and in zen mode, where the timer is what you're looking
+  at; the other single-key timer controls were already scoped that way.
+- Releases carry an Intel Mac build. The macOS runner is Apple Silicon, so the
+  release only ever contained an arm64 build and an Intel Mac got a download
+  that wouldn't run.
+
+### Changed
+
+- Settings opens on a "general" section — the app-wide options (theme,
+  greeting, update check, tray, hotkey) were filed under "startup", and are now
+  grouped by what they affect.
+
 ## [2.2.0] - 2026-08-12
 
 ### Added
