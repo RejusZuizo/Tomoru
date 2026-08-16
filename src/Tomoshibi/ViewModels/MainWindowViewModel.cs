@@ -250,7 +250,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _mediaPlayback = new VlcMediaService();
         Controls.CardContentRenderer.Media = _media;
         Controls.CardContentRenderer.Player = _mediaPlayback;
-        Review = new ReviewViewModel(_state, Save, Wallet, _reviewLog, _media);
+        // Everything that edits a deck or a card originates on the review page,
+        // so it gets a save that marks decks dirty; every other page's save
+        // leaves decks.json alone.
+        Review = new ReviewViewModel(_state, SaveWithDecks, Wallet, _reviewLog, _media);
         Music = new MusicPlayerViewModel(_state, Save, new MusicService(_mediaPlayback));
         SettingsPage = new SettingsPageViewModel(_state, Save, settings, Music, Subjects,
                                                  storage.Location);
@@ -805,6 +808,13 @@ public partial class MainWindowViewModel : ViewModelBase
             desktop.Shutdown();
     }
 
+    /// <summary>Save, and include the decks in it.</summary>
+    private void SaveWithDecks()
+    {
+        _state.DecksDirty = true;
+        Save();
+    }
+
     private void Save()
     {
         if (_suppressSaves)
@@ -835,6 +845,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (_saveTimer?.IsEnabled == true)
             _saveTimer.Stop();
+
+        // On the way out, write decks unconditionally. The dirty flag is a
+        // performance optimisation, and a missed flag shouldn't be able to
+        // cost someone their review progress.
+        _state.DecksDirty = true;
         _storage.Save(_state);
     }
 

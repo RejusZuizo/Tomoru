@@ -367,12 +367,7 @@ public partial class SettingsPageViewModel : ViewModelBase
 
     /// <summary>The whole state as indented JSON — a portable backup that the
     /// app can load straight back. Same shape the live file is written in.</summary>
-    public string BuildBackupJson() =>
-        JsonSerializer.Serialize(_state, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+    public string BuildBackupJson() => BackupRestore.Build(_state);
 
     /// <summary>Next date on/after <paramref name="from"/> falling on the given
     /// academic weekday (Mon-first), for the first occurrence of a recurrence.</summary>
