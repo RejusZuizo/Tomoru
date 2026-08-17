@@ -7,6 +7,22 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
+## [2.2.2] - 2026-08-16
+
+### Changed
+
+- Flashcard decks live in their own `decks.json` instead of inside
+  `tomoshibi.json`. The main file is rewritten in full on every debounced save,
+  and an imported Anki collection is megabytes — 5MB for a 6,000-note deck,
+  17MB for a large shared one — so ticking a subtask was rewriting the whole
+  collection. Decks are now written only when something changes one. Existing
+  files migrate on first launch with nothing to do.
+
+### Fixed
+
+- Backups include flashcard decks. Splitting decks out of the state file would
+  otherwise have produced backups with no cards in them.
+
 ## [2.2.1] - 2026-08-16
 
 ### Fixed

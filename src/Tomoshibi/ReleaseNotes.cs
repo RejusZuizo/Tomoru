@@ -10,7 +10,7 @@ namespace Tomoshibi;
 /// </summary>
 public static class ReleaseNotes
 {
-    public const string Version = "2.2.1";
+    public const string Version = "2.2.2";
 
     public static string VersionTag => $"v{Version}";
 
@@ -22,9 +22,9 @@ public static class ReleaseNotes
 
     private static readonly string[] Lines =
     {
-        "space no longer starts the timer from other pages — it scrolls, like everywhere else",
-        "settings opens on a general section, with the app-wide options grouped",
-        "intel macs get their own build",
+        "flashcard decks moved to their own file, so the app stops rewriting your whole collection every time it saves",
+        "imported an anki deck? this is the one that matters — a big collection made every keystroke expensive",
+        "your decks move across on first launch; nothing to do",
     };
 
     /// <summary>The notes as one bulleted block for the modal.</summary>
