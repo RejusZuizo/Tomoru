@@ -40,7 +40,9 @@ public class BackupRestoreTests
         original.Decks.Add(new Deck { Name = "kanji" });
         original.Decks[0].Cards.Add(new Flashcard { Front = "犬", Back = "dog" });
 
-        var restored = BackupRestore.Parse(JsonSerializer.Serialize(original, CamelCase));
+        // Built the way the app builds one — decks are no longer part of a
+        // plain AppState serialisation, so the backup has to re-attach them.
+        var restored = BackupRestore.Parse(BackupRestore.Build(original));
 
         Assert.NotNull(restored);
         Assert.Equal("finish the lab write-up", restored.DailyIntention);

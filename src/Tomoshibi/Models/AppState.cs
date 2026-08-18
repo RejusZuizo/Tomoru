@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System;
 
 namespace Tomoshibi.Models;
@@ -143,7 +144,18 @@ public class AppState
     public bool MusicShuffle { get; set; } = true;
 
     // Flashcard decks (spaced repetition)
+    /// <summary>Flashcard decks. Kept out of tomoshibi.json and written to
+    /// decks.json instead: an imported Anki collection is megabytes (a 6,000
+    /// note deck is ~5MB, a big shared one ~17MB), and the main file is
+    /// rewritten in full on every debounced save. Ticking a subtask shouldn't
+    /// rewrite your whole collection.</summary>
+    [JsonIgnore]
     public List<Deck> Decks { get; set; } = new();
+
+    /// <summary>Set when something changes a deck, so a save knows whether
+    /// decks.json needs rewriting at all. Never persisted.</summary>
+    [JsonIgnore]
+    public bool DecksDirty { get; set; }
 
     /// <summary>When true, revealing a card's answer hides the prompt so only
     /// the answer shows (Anki-style flip). When false (default), the prompt
