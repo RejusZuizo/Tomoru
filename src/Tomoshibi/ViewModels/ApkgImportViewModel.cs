@@ -76,7 +76,10 @@ public partial class ApkgImportViewModel : ViewModelBase
 
         Status = $"imported {result.Notes} notes · {result.Cards} cards · {result.Decks.Count} decks"
                + $" · {result.Media} media"
-               + (result.Skipped > 0 ? $" · {result.Skipped} skipped" : string.Empty);
+               + (result.Skipped > 0 ? $" · {result.Skipped} skipped" : string.Empty)
+               // Say so rather than letting someone believe a 60,000-note
+               // collection came across whole.
+               + (result.Truncated ? " · stopped at the 50,000-note limit — split the deck in Anki and import the rest" : string.Empty);
         IsDone = true;
         HasFile = false;
     }

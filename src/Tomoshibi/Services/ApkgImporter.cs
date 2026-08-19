@@ -19,6 +19,10 @@ public sealed class ApkgResult
     public int Cards { get; set; }
     public int Media { get; set; }
     public int Skipped { get; set; }
+
+    /// <summary>True when the file held more notes than the importer will take
+    /// in one go, so the tail was left behind.</summary>
+    public bool Truncated { get; set; }
 }
 
 /// <summary>
@@ -30,6 +34,20 @@ public sealed class ApkgResult
 /// </summary>
 public static class ApkgImporter
 {
+    // An .apkg is an attacker-supplied zip containing an attacker-supplied
+    // SQLite database. Nothing here trusts its size: a small archive can
+    // declare — or actually contain — gigabytes, and both the media loop and
+    // the collection extract used to expand it without looking.
+    //
+    // Limits are set well above a real collection. Anki's largest shared decks
+    // run to tens of thousands of notes and a few hundred MB of audio; these
+    // are generous enough not to reject those, and small enough that a bomb
+    // stops rather than fills the disk.
+    private const long MaxCollectionBytes = 250L * 1024 * 1024;
+    private const long MaxMediaFileBytes = 25L * 1024 * 1024;
+    private const long MaxTotalMediaBytes = 250L * 1024 * 1024;
+    private const int MaxNotes = 50_000;
+
     private readonly record struct ModelInfo(int Type, int TemplateCount);
     private readonly record struct AnkiCard(int Ord, long Did, int Type, int Queue, long Due, int Ivl, int Factor, int Reps);
 
@@ -49,10 +67,23 @@ public static class ApkgImporter
                     : Fail("No Anki collection was found inside this file.");
             }
 
+            // The declared length is the archive's own claim, so it's checked
+            // here as a cheap early out and again while copying, where the
+            // count is of bytes that actually arrived.
+            if (dbEntry.Length > MaxCollectionBytes)
+                return Fail("That collection is too large to import (over 250MB). " +
+                            "In Anki, export a single deck rather than the whole collection.");
+
             var mediaMap = ImportMedia(zip, media);
 
             tempDb = Path.Combine(Path.GetTempPath(), "tomoshibi-apkg-" + Guid.NewGuid().ToString("N") + ".db");
-            dbEntry.ExtractToFile(tempDb, overwrite: true);
+            using (var dbSource = dbEntry.Open())
+            using (var dbTarget = File.Create(tempDb))
+            {
+                if (!CopyCapped(dbSource, dbTarget, MaxCollectionBytes))
+                    return Fail("That collection is too large to import (over 250MB). " +
+                                "In Anki, export a single deck rather than the whole collection.");
+            }
 
             var result = new ApkgResult { Ok = true, Message = "imported" };
 
@@ -88,6 +119,12 @@ public static class ApkgImporter
 
                         var fields = reader.GetString(2).Split('\x1f');
                         var tags = reader.GetString(3);
+
+                        if (result.Notes >= MaxNotes)
+                        {
+                            result.Truncated = true;
+                            break;
+                        }
 
                         var note = BuildNote(model, fields, tags, mediaMap);
                         CardGenerator.Sync(note);
@@ -229,9 +266,31 @@ public static class ApkgImporter
         return map;
     }
 
+    /// <summary>Copy at most <paramref name="limit"/> bytes, and say whether it
+    /// finished inside that. Counts what actually arrives rather than trusting
+    /// the size the archive declares.</summary>
+    private static bool CopyCapped(Stream source, Stream target, long limit)
+    {
+        var buffer = new byte[81920];
+        long written = 0;
+        int read;
+
+        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            written += read;
+            if (written > limit)
+                return false;
+
+            target.Write(buffer, 0, read);
+        }
+
+        return true;
+    }
+
     private static Dictionary<string, string> ImportMedia(ZipArchive zip, MediaStore media)
     {
         var map = new Dictionary<string, string>();
+        long total = 0;
         var mediaEntry = zip.GetEntry("media");
         if (mediaEntry is null) return map;
 
@@ -245,9 +304,15 @@ public static class ApkgImporter
                 var fileEntry = zip.GetEntry(prop.Name);
                 if (filename is null || fileEntry is null) continue;
 
+                if (fileEntry.Length > MaxMediaFileBytes || total >= MaxTotalMediaBytes)
+                    continue;
+
                 using var fs = fileEntry.Open();
                 using var ms = new MemoryStream();
-                fs.CopyTo(ms);
+                if (!CopyCapped(fs, ms, Math.Min(MaxMediaFileBytes, MaxTotalMediaBytes - total)))
+                    continue; // a single oversized file is skipped, not fatal
+
+                total += ms.Length;
                 map[filename] = media.Import(ms.ToArray(), filename);
             }
         }

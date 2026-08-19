@@ -52,7 +52,11 @@ The imports are the real surface, since they are the only untrusted input:
 
 - **`.apkg` (Anki) import** — reads an attacker-supplied SQLite collection
   directly. Anything that escapes the temp database, writes outside the media
-  folder, or executes as a result of parsing.
+  folder, or executes as a result of parsing. Sizes are capped (250MB
+  collection, 25MB per media file, 250MB of media, 50,000 notes) and counted as
+  bytes arrive rather than trusted from the archive's own headers, so a
+  decompression bomb stops instead of filling memory or disk — report anything
+  that gets past that.
 - **Media extraction** — imported filenames are reduced with
   `Path.GetFileName` and prefixed with a content hash before being written.
   Anything that defeats that and lands a file outside the media folder.

@@ -10,7 +10,7 @@ namespace Tomoshibi;
 /// </summary>
 public static class ReleaseNotes
 {
-    public const string Version = "2.2.2";
+    public const string Version = "2.2.3";
 
     public static string VersionTag => $"v{Version}";
 
@@ -22,9 +22,8 @@ public static class ReleaseNotes
 
     private static readonly string[] Lines =
     {
-        "flashcard decks moved to their own file, so the app stops rewriting your whole collection every time it saves",
-        "imported an anki deck? this is the one that matters — a big collection made every keystroke expensive",
-        "your decks move across on first launch; nothing to do",
+        "anki imports are size-limited now, so a malformed or hostile deck can't run the app out of memory or disk",
+        "an oversized deck says so instead of failing strangely",
     };
 
     /// <summary>The notes as one bulleted block for the modal.</summary>

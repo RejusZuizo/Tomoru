@@ -7,6 +7,23 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
+## [2.2.3] - 2026-08-19
+
+### Security
+
+- The `.apkg` importer enforces size limits: 250MB collection, 25MB per media
+  file, 250MB of media in total, 50,000 notes. Bytes are counted as they arrive
+  rather than trusted from the archive's headers, so a decompression bomb — a
+  few hundred KB that expands to gigabytes — stops instead of filling memory
+  and disk. It's the one path that parses an attacker-supplied SQLite database,
+  and it was the only importer without a cap; `.ics` and text decks already had
+  one.
+
+### Changed
+
+- An oversized or truncated Anki import says so rather than failing obscurely
+  or appearing to succeed.
+
 ## [2.2.2] - 2026-08-16
 
 ### Changed
