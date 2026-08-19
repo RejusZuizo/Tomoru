@@ -176,7 +176,7 @@
                                        Classes="comment" TextWrapping="Wrap" />
 
                             <TextBlock Text="shortcuts" Classes="key" Margin="0,6,0,0" />
-                            <CheckBox IsChecked="{Binding GlobalHotkeyEnabled}"
+                            <CheckBox IsChecked="{Binding HotkeyActive}"
                                       IsEnabled="{Binding HotkeySupported}"
                                       Content="start / pause from any app" />
                             <TextBlock Text="{Binding HotkeyHint}" Classes="comment" TextWrapping="Wrap" />
