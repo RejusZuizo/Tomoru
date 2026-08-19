@@ -142,14 +142,28 @@ public partial class SettingsPageViewModel : ViewModelBase
     public void InitHotkey(IGlobalHotkeyService hotkey, Action<bool> apply)
     {
         HotkeySupported = hotkey.IsSupported;
+        OnPropertyChanged(nameof(HotkeyActive));
         HotkeyHint = hotkey.IsSupported
             ? $"# {hotkey.ChordLabel} starts/pauses the timer from any app — even from the tray"
             : "# not available on this platform yet";
         _applyHotkey = apply;
     }
 
+    /// <summary>What the checkbox shows. The stored preference stays whatever
+    /// the user set, but on a platform that can't claim a chord — Linux ships
+    /// the null service, because X11 grabs don't survive Wayland — a ticked
+    /// box would promise something that doesn't happen. Off and disabled says
+    /// the true thing, and their setting is still there if they run the app
+    /// somewhere it works.</summary>
+    public bool HotkeyActive
+    {
+        get => GlobalHotkeyEnabled && HotkeySupported;
+        set => GlobalHotkeyEnabled = value;
+    }
+
     partial void OnGlobalHotkeyEnabledChanged(bool value)
     {
+        OnPropertyChanged(nameof(HotkeyActive));
         _state.GlobalHotkeyEnabled = value;
         _save();
         _applyHotkey?.Invoke(value);
