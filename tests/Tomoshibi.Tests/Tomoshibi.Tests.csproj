@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
     <!-- Build minimal .apkg SQLite fixtures for the importer tests. Pinned in
          both manifests, so it has to move in both at once: the app project is
          referenced from here, and a lower version on this side reads as a
