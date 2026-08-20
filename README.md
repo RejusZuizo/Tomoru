@@ -150,7 +150,11 @@ nothing. On Arch that's `sudo pacman -S vlc`; on Debian/Ubuntu,
 
 ## Building from source
 
-You'll need the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+You'll need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+Tomoshibi still *targets* .NET 8 — the newer SDK is only the build toolchain,
+because Avalonia 12's source generators need a Roslyn version that older SDKs
+don't carry. `global.json` enforces this, so a too-old SDK says so plainly
+instead of failing later with a few hundred missing-symbol errors.
 
 ```bash
 git clone https://github.com/socom1/Tomoshibi.git tomoshibi
