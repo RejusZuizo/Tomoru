@@ -33,7 +33,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Read Anki's SQLite collection for .apkg import (bundles native e_sqlite3). -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
     <!-- Material Design Icons (vector, theme-aware) for deck icons etc. -->
     <!-- Tracks the Avalonia major: 2.x is built against Avalonia 11 and 3.x
          against 12. A mismatch here doesn't fail the build — the icons ship
