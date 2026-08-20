@@ -45,7 +45,7 @@ jobs:
       # need Roslyn 4.14 from the .NET 10 SDK, while the net8.0 targets still
       # need the 8.0 runtime to run against.
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
