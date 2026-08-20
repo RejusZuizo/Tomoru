@@ -155,9 +155,23 @@ now holds the rules with time entering only through `Tick()`, and the view model
 is left with labels and a timer — which is why a test can run a whole study
 afternoon in a loop.
 
-What stays untested is the view models themselves, and that's a real gap rather
-than a principled position: a change like moving the grade scale out of
-`SubjectsViewModel` has to be verified by hand.
+The view models were the long-standing gap, and the cost was visible: UI
+changes had to be verified by screenshot, a timetable-grid change shipped a
+regression that only surfaced by looking, and a row-alignment fix took three
+passes because nothing could assert it.
+
+They're covered now, at least where it matters. `TodoViewModel`,
+`TimetableViewModel` and `SubjectsViewModel` hold no Avalonia types, so a test
+constructs them directly — no app, no dispatcher, no window — and drives their
+commands. What's asserted is the behaviour that was expensive to check by eye:
+the week grid measuring itself from the timetable, a block landing at its real
+time rather than rounded to the hour, a repeating ticket actually putting its
+follow-up on the list, and the subject delete confirmation staging rather than
+deleting.
+
+What's still uncovered is the shell (`MainWindowViewModel`) and the review
+page, both of which reach for `DispatcherTimer` and platform services. Those
+need the seams pulled out first — the same treatment `PomodoroMachine` got.
 
 ## Failing in front of the user
 
