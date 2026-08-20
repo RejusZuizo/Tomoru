@@ -43,7 +43,7 @@
     <!-- Embedded audio + video for flashcards (and a real Windows music
          backend). LibVLCSharp is the managed binding; the native libvlc comes
          from the per-OS packages below. -->
-    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.9.2" />
+    <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.1" />
     <!-- The Tmds.DBus.Protocol pin is gone: it existed to force the patched
          0.21.3 over the vulnerable 0.20.0 that Avalonia 11 pulled in
          (GHSA-xrw6-gwf8-vvr9, High). Avalonia 12 depends on 0.94.1, which is
