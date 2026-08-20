@@ -128,7 +128,7 @@
                                                 <TextBlock Grid.Column="1" Text="{Binding AverageLabel}"
                                                            VerticalAlignment="Center" FontSize="13" />
                                                 <NumericUpDown Grid.Column="3" Value="{Binding Weight}"
-                                                               Watermark="weight %"
+                                                               PlaceholderText="weight %"
                                                                Minimum="0" Maximum="100" FormatString="0.#"
                                                                FontSize="13" Padding="10,5"
                                                                ToolTip.Tip="how much this year counts toward the degree" />
@@ -458,7 +458,7 @@
                                      Classes.invalid="{Binding IsBulkTextInvalid}"
                                      AcceptsReturn="True" TextWrapping="Wrap"
                                      VerticalContentAlignment="Top"
-                                     Watermark="one per line — title, weight, [category], [date]&#x0a;midterm, 30, exam, 2026-06-20&#x0a;final, 50, exam&#x0a;quiz 1, 10, quiz" />
+                                     PlaceholderText="one per line — title, weight, [category], [date]&#x0a;midterm, 30, exam, 2026-06-20&#x0a;final, 50, exam&#x0a;quiz 1, 10, quiz" />
                             <Button Classes="accent" Content="add all" HorizontalAlignment="Left"
                                     Command="{Binding AddBulkCommand}" />
                         </StackPanel>
@@ -537,9 +537,9 @@
 
                         <Grid ColumnDefinitions="*,1.4*,Auto">
                             <TextBox Grid.Column="0" Text="{Binding NewResourceTitle}"
-                                     Watermark="label" FontSize="13" Padding="10,6" />
+                                     PlaceholderText="label" FontSize="13" Padding="10,6" />
                             <TextBox Grid.Column="1" Text="{Binding NewResourceUrl}"
-                                     Watermark="slides / syllabus / drive url…" Margin="6,0,0,0"
+                                     PlaceholderText="slides / syllabus / drive url…" Margin="6,0,0,0"
                                      FontSize="13" Padding="10,6"
                                      Classes.invalid="{Binding IsResourceUrlInvalid}">
                                 <TextBox.KeyBindings>
@@ -560,7 +560,7 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="// メモ · notes" Classes="jp" />
                         <TextBox Classes="code" Text="{Binding Notes}"
-                                 Watermark="room, lecturer, reminders, anything…"
+                                 PlaceholderText="room, lecturer, reminders, anything…"
                                  AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" />
                     </StackPanel>
                 </Border>

@@ -248,23 +248,23 @@
                 <!-- Simple form -->
                 <StackPanel Spacing="10" IsVisible="{Binding IsSimpleMode}">
                     <TextBox Text="{Binding NewTaskTitle}"
-                             Watermark="what's the task?" />
+                             PlaceholderText="what's the task?" />
                     <Grid ColumnDefinitions="*,8,*,8,*">
                         <NumericUpDown Grid.Column="0" Value="{Binding NewTaskStudy}"
-                                       Watermark="study" Minimum="1" Maximum="240" FormatString="0" />
+                                       PlaceholderText="study" Minimum="1" Maximum="240" FormatString="0" />
                         <NumericUpDown Grid.Column="2" Value="{Binding NewTaskShort}"
-                                       Watermark="short" Minimum="1" Maximum="60" FormatString="0" />
+                                       PlaceholderText="short" Minimum="1" Maximum="60" FormatString="0" />
                         <NumericUpDown Grid.Column="4" Value="{Binding NewTaskLong}"
-                                       Watermark="long" Minimum="1" Maximum="120" FormatString="0" />
+                                       PlaceholderText="long" Minimum="1" Maximum="120" FormatString="0" />
                     </Grid>
-                    <TextBox Text="{Binding NewTaskCourse}" Watermark="course" />
+                    <TextBox Text="{Binding NewTaskCourse}" PlaceholderText="course" />
                     <CheckBox IsChecked="{Binding NewTaskDone}" Content="done" />
                 </StackPanel>
 
                 <!-- Code form -->
                 <TextBox Classes="code" IsVisible="{Binding IsCodeMode}"
                          Text="{Binding NewTaskCode}"
-                         Watermark="// title&#x0a;study: 25&#x0a;short: 5&#x0a;course: MATH101"
+                         PlaceholderText="// title&#x0a;study: 25&#x0a;short: 5&#x0a;course: MATH101"
                          AcceptsReturn="True" TextWrapping="Wrap"
                          MinHeight="140" />
 
@@ -301,7 +301,7 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding ModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormName}" Watermark="subject name (required)"
+                <TextBox Text="{Binding FormName}" PlaceholderText="subject name (required)"
                          Classes.invalid="{Binding IsFormNameInvalid}" />
                 <TextBlock Classes="formerror" Text="{Binding FormError}"
                            IsVisible="{Binding HasFormError}" />
@@ -310,30 +310,30 @@
                     <AutoCompleteBox Grid.Column="0" Text="{Binding FormCode}"
                                      ItemsSource="{Binding KnownCourses}"
                                      FilterMode="Contains"
-                                     Watermark="course code" />
+                                     PlaceholderText="course code" />
                     <NumericUpDown Grid.Column="2" Value="{Binding FormCredits}"
-                                   Watermark="credits"
+                                   PlaceholderText="credits"
                                    Minimum="0.5" Maximum="60" Increment="0.5" FormatString="0.#"
                                    ToolTip.Tip="weight toward the overall figure — credit hours / ects / units" />
                 </Grid>
 
                 <Grid ColumnDefinitions="*,8,*,8,*">
                     <NumericUpDown Grid.Column="0" Value="{Binding FormYear}"
-                                   Watermark="year" Minimum="1" Maximum="10" FormatString="0" />
+                                   PlaceholderText="year" Minimum="1" Maximum="10" FormatString="0" />
                     <NumericUpDown Grid.Column="2" Value="{Binding FormSemester}"
-                                   Watermark="semester" Minimum="1" Maximum="4" FormatString="0" />
+                                   PlaceholderText="semester" Minimum="1" Maximum="4" FormatString="0" />
                     <NumericUpDown Grid.Column="4" Value="{Binding FormTarget}"
-                                   Watermark="target %" Minimum="1" Maximum="100" FormatString="0.#"
+                                   PlaceholderText="target %" Minimum="1" Maximum="100" FormatString="0.#"
                                    ToolTip.Tip="the grade you're aiming for — drives the outlook" />
                 </Grid>
 
                 <NumericUpDown Value="{Binding FormTargetHours}"
-                               Watermark="study goal — hours / week"
+                               PlaceholderText="study goal — hours / week"
                                Minimum="0" Maximum="80" Increment="0.5" FormatString="0.#"
                                ToolTip.Tip="weekly study-time goal — tracked against your focus minutes" />
 
                 <TextBox Text="{Binding FormDropRules}"
-                         Watermark="drop rules — e.g. quiz: best 8; lab: best 3"
+                         PlaceholderText="drop rules — e.g. quiz: best 8; lab: best 3"
                          ToolTip.Tip="per category, only the best N count" />
 
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
@@ -407,7 +407,7 @@
                 <StackPanel Spacing="5">
                     <TextBlock Text="what needs doing?" Classes="key" />
                     <TextBox Text="{Binding FormTitle}"
-                             Watermark="e.g. finish the problem set"
+                             PlaceholderText="e.g. finish the problem set"
                              Classes.invalid="{Binding IsFormTitleInvalid}" />
                     <TextBlock Classes="formerror" Text="{Binding FormError}"
                                IsVisible="{Binding HasFormError}" />
@@ -416,7 +416,7 @@
                 <StackPanel Spacing="5">
                     <TextBlock Text="notes" Classes="key" />
                     <TextBox Text="{Binding FormDescription}"
-                             Watermark="why it matters, where it lives, what &apos;done&apos; looks like…"
+                             PlaceholderText="why it matters, where it lives, what &apos;done&apos; looks like…"
                              AcceptsReturn="True" TextWrapping="Wrap"
                              MinHeight="92" VerticalContentAlignment="Top" />
                 </StackPanel>
@@ -426,7 +426,7 @@
                         <TextBlock Text="course" Classes="key" />
                         <AutoCompleteBox Text="{Binding FormCourse}"
                                          ItemsSource="{Binding KnownCourses}"
-                                         FilterMode="Contains" Watermark="e.g. MATH201" />
+                                         FilterMode="Contains" PlaceholderText="e.g. MATH201" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" Spacing="5">
                         <TextBlock Text="due date" Classes="key" />
@@ -451,7 +451,7 @@
                     <StackPanel Grid.Column="2" Spacing="5">
                         <TextBlock Text="how many focus blocks?" Classes="key" />
                         <NumericUpDown Value="{Binding FormEstimate}"
-                                       Watermark="e.g. 3" HorizontalAlignment="Stretch"
+                                       PlaceholderText="e.g. 3" HorizontalAlignment="Stretch"
                                        Minimum="1" Maximum="50" FormatString="0"
                                        AutomationProperties.Name="estimated focus blocks" />
                     </StackPanel>
@@ -537,9 +537,9 @@
                                    Margin="0,10,0,0" />
                 </Grid>
 
-                <TextBox Watermark="class name (required)" Text="{Binding NewSlotTitle}"
+                <TextBox PlaceholderText="class name (required)" Text="{Binding NewSlotTitle}"
                          Classes.invalid="{Binding IsSlotTitleInvalid}" />
-                <AutoCompleteBox Watermark="course"
+                <AutoCompleteBox PlaceholderText="course"
                                  Text="{Binding NewSlotCourse}"
                                  ItemsSource="{Binding KnownCourses}"
                                  FilterMode="Contains" />
@@ -575,15 +575,15 @@
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding AssessModalTitle}" Classes="jp" />
 
-                <TextBox Text="{Binding FormAssessTitle}" Watermark="exam, essay, lab… (required)"
+                <TextBox Text="{Binding FormAssessTitle}" PlaceholderText="exam, essay, lab… (required)"
                          Classes.invalid="{Binding IsAssessTitleInvalid}" />
 
                 <Grid ColumnDefinitions="*,8,110">
                     <TextBox Grid.Column="0" Text="{Binding FormAssessCategory}"
-                             Watermark="category"
+                             PlaceholderText="category"
                              ToolTip.Tip="optional — what drop rules target, e.g. quiz" />
                     <NumericUpDown Grid.Column="2" Value="{Binding FormAssessWeight}"
-                                   Watermark="weight %" Minimum="0.1" Maximum="100" FormatString="0.#"
+                                   PlaceholderText="weight %" Minimum="0.1" Maximum="100" FormatString="0.#"
                                    Classes.invalid="{Binding IsAssessWeightInvalid}" />
                 </Grid>
 
@@ -592,15 +592,15 @@
 
                 <Grid ColumnDefinitions="*,8,*">
                     <NumericUpDown Grid.Column="0" Value="{Binding FormAssessGrade}"
-                                   Watermark="grade %" Minimum="0" Maximum="100" FormatString="0.#"
+                                   PlaceholderText="grade %" Minimum="0" Maximum="100" FormatString="0.#"
                                    ToolTip.Tip="the real result — leave empty until it lands" />
                     <NumericUpDown Grid.Column="2" Value="{Binding FormAssessWhatIf}"
-                                   Watermark="what-if %" Minimum="0" Maximum="100" FormatString="0.#"
+                                   PlaceholderText="what-if %" Minimum="0" Maximum="100" FormatString="0.#"
                                    BorderBrush="{DynamicResource AmberBrush}"
                                    ToolTip.Tip="hypothetical — planning only, never saved as a real grade" />
                 </Grid>
 
-                <CalendarDatePicker SelectedDate="{Binding FormAssessDate}" Watermark="date" />
+                <CalendarDatePicker SelectedDate="{Binding FormAssessDate}" PlaceholderText="date" />
 
                 <TextBlock Text="what-if is hypothetical — it tints the row amber and feeds the simulated standing, but is never saved as a grade"
                            Classes="caption" TextWrapping="Wrap" />
@@ -706,7 +706,7 @@
             </Border.RenderTransform>
             <StackPanel Spacing="8">
                 <TextBox x:Name="PaletteBox" Text="{Binding Query}"
-                         Watermark="jump to… (pages, actions, subjects)"
+                         PlaceholderText="jump to… (pages, actions, subjects)"
                          KeyDown="OnPaletteKeyDown" />
                 <ListBox ItemsSource="{Binding Results}"
                          SelectedIndex="{Binding SelectedIndex}"
@@ -765,7 +765,7 @@
                 <StackPanel Spacing="6">
                     <TextBlock Text="今日の狙い · what do you want to do today?" Classes="jp" />
                     <TextBox Text="{Binding Today.DailyIntention}"
-                             Watermark="the one thing…" />
+                             PlaceholderText="the one thing…" />
                 </StackPanel>
 
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">

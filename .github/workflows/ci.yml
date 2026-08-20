@@ -20,10 +20,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Two SDKs on purpose. The app still targets net8.0, but Avalonia 12's
+      # source generators need Roslyn 4.14, which only ships with the .NET 10
+      # SDK — and when the generator is too old it silently doesn't run rather
+      # than failing, so every InitializeComponent() goes missing instead. The
+      # 8.0 SDK stays for the runtime that net8.0 tests execute against.
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore Tomoshibi.sln

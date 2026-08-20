@@ -152,7 +152,7 @@ public class TodoViewModelTests
 
         // The page defaults to "open", so the finished one leaves the list as
         // its replacement joins — what's left is the new, unstarted copy.
-        var shown = Assert.Single(vm.Items.Where(i => i.Model.Title == "Problem set"));
+        var shown = Assert.Single(vm.Items, i => i.Model.Title == "Problem set");
         Assert.False(shown.IsDone);
         Assert.True(shown.Repeats);
         Assert.Equal("weekly", shown.RepeatLabel);

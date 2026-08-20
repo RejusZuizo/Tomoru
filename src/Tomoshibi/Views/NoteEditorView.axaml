@@ -50,7 +50,7 @@
 
         <StackPanel Spacing="4">
             <TextBlock Text="tags (space separated)" Classes="caption" />
-            <TextBox Text="{Binding TagsText}" Watermark="e.g. midterm chapter3"
+            <TextBox Text="{Binding TagsText}" PlaceholderText="e.g. midterm chapter3"
                      FontSize="13" Padding="10,6" />
         </StackPanel>
 

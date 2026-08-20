@@ -286,7 +286,7 @@
                                  Margin="0,12,0,0"
                                  IsVisible="{Binding Tasks.IsEditorVisible}"
                                  Text="{Binding Tasks.Source}"
-                                 Watermark="// what do you want to get done?&#x0a;study: 25&#x0a;short: 5&#x0a;course: MATH101"
+                                 PlaceholderText="// what do you want to get done?&#x0a;study: 25&#x0a;short: 5&#x0a;course: MATH101"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  VerticalContentAlignment="Top" />

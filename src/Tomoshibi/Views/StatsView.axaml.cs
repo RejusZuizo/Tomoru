@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using Tomoshibi.ViewModels;
 
 namespace Tomoshibi.Views;
@@ -45,7 +44,10 @@ public partial class StatsView : UserControl
     /// list has laid out before we ask the control for the row's container.</summary>
     private void ScrollJournalIntoView(JournalEntryViewModel entry)
     {
-        if (this.GetVisualRoot() is null)
+        // Avalonia 12 dropped the GetVisualRoot extension. TopLevel.GetTopLevel
+        // asks the same question — is this attached to a window yet — and is
+        // what the rest of the code-behind already uses.
+        if (TopLevel.GetTopLevel(this) is null)
             return;
 
         Dispatcher.UIThread.Post(

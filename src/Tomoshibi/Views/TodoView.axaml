@@ -48,7 +48,7 @@
                     Command="{Binding ShowAllCommand}" />
 
             <TextBox Grid.Column="4" Text="{Binding SearchText}"
-                     Watermark="search title, notes, course…" />
+                     PlaceholderText="search title, notes, course…" />
         </Grid>
 
         <!-- Tickets -->
@@ -195,7 +195,7 @@
                                             <!-- Add subtask -->
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <TextBox Text="{Binding NewSubtaskTitle}"
-                                                         Watermark="add a step…"
+                                                         PlaceholderText="add a step…"
                                                          FontSize="13" Padding="10,6"
                                                          Classes.invalid="{Binding IsNewSubtaskInvalid}">
                                                     <TextBox.KeyBindings>

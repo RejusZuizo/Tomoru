@@ -17,6 +17,13 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <!-- Build minimal .apkg SQLite fixtures for the importer tests. -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <!-- Renders real controls with the real theme, no display server. Kept at
+         the app's Avalonia version — a mismatch here would test a different
+         Avalonia than the one that ships.
+         Deliberately not Avalonia.Headless.XUnit: that package moved to
+         xunit v3, which collides with the xunit 2.x the other 297 tests use.
+         Driving HeadlessUnitTestSession directly costs one helper. -->
+    <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
   </ItemGroup>
 
   <ItemGroup>

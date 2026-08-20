@@ -41,10 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Both SDKs, for the reason spelled out in ci.yml: Avalonia 12 builds
+      # need Roslyn 4.14 from the .NET 10 SDK, while the net8.0 targets still
+      # need the 8.0 runtime to run against.
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       # The same suite the ci workflow runs — a tag shouldn't be able to
       # produce a download from code that doesn't pass its own tests.
