@@ -235,6 +235,10 @@ Kept out of this release deliberately: it's a breaking major across a heavily
 custom theme, and a regression from it shouldn't be confused with a bug in the
 features above.
 
+This is the plan as it stood then, kept for the reasoning. What actually
+happened — including the two things this list didn't predict — is in the v2.3
+section below.
+
 
 
 - [ ] **11.2.1 → 11.3.20 first.** Nineteen patch releases, no API change.
@@ -315,12 +319,12 @@ Deliberately off the list to keep things focused: cloud sync, accounts, mobile,
 multi-profile, and any always-on network features. Tomoshibi is a local-first,
 single-user desktop app.
 
-## v2.3 — Avalonia 12 (blocked on a toolchain bump)
+## v2.3 — Avalonia 12 (building and green; needs a look before it ships)
 
-Attempted and parked. The migration itself is smaller than expected; the
-blocker is the build toolchain, not the code.
+The toolchain blocker is gone. The app builds warning-free on Avalonia 12.1.1,
+all 297 tests pass, and it runs.
 
-**What was already done and works** (on the `avalonia-12` branch):
+**Done, on the `avalonia-12` branch:**
 
 - [x] `Avalonia*` bumped to 12.1.1, and the Dependabot major-version ignore
       removed
@@ -332,26 +336,53 @@ blocker is the build toolchain, not the code.
 - [x] `this.GetVisualRoot()` → `TopLevel.GetTopLevel(this)` in `StatsView` — the
       extension is gone in 12, and the replacement asks the same question
 
-**The blocker:**
+- [x] The .NET 10 SDK, which is the whole of what "blocked on a toolchain bump"
+      meant. Avalonia 12's generators need Roslyn 4.14 and an 8.0.x SDK can't
+      run them; because CS9057 is a *warning*, the generator quietly didn't run
+      and every `InitializeComponent()` and `x:Name` field went missing. It read
+      as broken code and was a missing tool. `global.json` now pins the feature
+      band so the next machine gets a one-line "install the 10.0.100 SDK"
+      instead of a few hundred missing-symbol errors.
+- [x] `dotnet-version` in `ci.yml` and `release.yml` → **both** `8.0.x` and
+      `10.0.x`. Only the toolchain moves; the targets stay `net8.0`, and the 8.0
+      runtime still has to be present for the tests to execute against.
+- [x] README now says .NET 10, and says why the target is still 8.
+- [x] `Material.Icons.Avalonia` 2.1.10 → 3.0.2. **This is the one that bites.**
+      2.x is built against Avalonia 11, 3.x against 12, and the mismatch does
+      not fail the build — the package ships compiled XAML, so it surfaces at
+      runtime as `MissingMethodException: TemplateBinding.ProvideValue()` the
+      first time a template is built, which is on navigation, not on startup.
+      A smoke test that only launches the app would not have caught it.
+- [x] `Watermark` → `PlaceholderText` across 8 views (49 attributes). Renamed in
+      12; the old name still compiles, as a warning.
 
-    CS9057: The analyzer assembly 'Avalonia.Generators.dll' references
-    version '4.14.0.0' of Microsoft.CodeAnalysis...
+- [x] `ThemeTemplateTests` — headless render tests, which is what this migration
+      actually needed and the project didn't have. They build real control
+      templates with the real style stack and assert the `/template/` setters
+      landed, so a selector that stops matching fails a test instead of quietly
+      rendering Fluent blue. Deliberately **not** using
+      `Avalonia.Headless.XUnit`: it moved to xunit v3, which collides with the
+      xunit 2.x the other 297 tests use.
 
-Avalonia 12's source generators need **Roslyn 4.14**, which ships with the .NET
-10 SDK. The library targets `net8.0` perfectly well, but an 8.0.x SDK can't run
-its analyzers — so `InitializeComponent()` and every `x:Name` field silently
-fail to generate, and all 14 views fail to compile. It's a warning, not an
-error, which is why the symptom looks like broken code rather than a missing
-tool.
+      Worth knowing these were checked against a known-bad tree before being
+      trusted: with Material.Icons pinned back to 2.1.10 the icon test
+      reproduces the exact `MissingMethodException`, and the rest still pass —
+      which is also the proof that the theme assertions and the package-
+      mismatch check are catching two genuinely different things.
 
-**So v2.3 needs, in this order:**
+**Before this ships:**
 
-- [ ] Install the .NET 10 SDK locally
-- [ ] `dotnet-version` in `ci.yml` and `release.yml` → `10.0.x` (the projects can
-      keep targeting `net8.0`; only the build toolchain moves)
-- [ ] Update the README's "you'll need the .NET 8 SDK"
-- [ ] Consider a `global.json` pinning the SDK feature band, so a machine with
-      an older SDK fails loudly rather than mysteriously
-- [ ] Then the actual work: ~50 `/template/` selectors in `Controls.axaml` reach
-      into Fluent internals and will stop applying **silently** rather than
-      failing the build. That needs a visual pass over every control
+- [ ] `LibVLCSharp.Avalonia` has **no Avalonia 12 release** — 3.9.2 asks for
+      Avalonia 11.0.4, and even 3.10.1 asks for 11.3.13. Narrower than it
+      sounds, though: music goes through `LibVLCSharp.Shared`, which doesn't
+      reference Avalonia at all and so isn't exposed to any of this. The only
+      Avalonia-facing piece is `VideoView` — flashcard video — and it carries no
+      compiled XAML, so it can't fail the way Material.Icons did. A test now
+      covers that its type still loads. What a headless test *can't* cover is
+      the native surface actually embedding, so play a card with video in it
+      before tagging.
+- [ ] The `Padding` and `Foreground` setters on
+      `NumericUpDown /template/ TextBox#PART_TextBox` are dead and always have
+      been — Fluent sets both via `TemplateBinding` on the element, which
+      outranks a style setter. Renders correctly regardless (the values arrive
+      from NumericUpDown's own properties), so this is tidying, not a bug.
