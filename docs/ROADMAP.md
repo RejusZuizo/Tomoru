@@ -314,3 +314,44 @@ anything there starts changing often.
 Deliberately off the list to keep things focused: cloud sync, accounts, mobile,
 multi-profile, and any always-on network features. Tomoshibi is a local-first,
 single-user desktop app.
+
+## v2.3 — Avalonia 12 (blocked on a toolchain bump)
+
+Attempted and parked. The migration itself is smaller than expected; the
+blocker is the build toolchain, not the code.
+
+**What was already done and works** (on the `avalonia-12` branch):
+
+- [x] `Avalonia*` bumped to 12.1.1, and the Dependabot major-version ignore
+      removed
+- [x] `Avalonia.Diagnostics` → `AvaloniaUI.DiagnosticsSupport` (2.2.3) — the old
+      package never shipped a 12.x
+- [x] The `Tmds.DBus.Protocol` pin deleted. It existed to force the patched
+      0.21.3 over a vulnerable 0.20.0 (GHSA-xrw6-gwf8-vvr9); Avalonia 12 depends
+      on 0.94.1, so the pin only held it back
+- [x] `this.GetVisualRoot()` → `TopLevel.GetTopLevel(this)` in `StatsView` — the
+      extension is gone in 12, and the replacement asks the same question
+
+**The blocker:**
+
+    CS9057: The analyzer assembly 'Avalonia.Generators.dll' references
+    version '4.14.0.0' of Microsoft.CodeAnalysis...
+
+Avalonia 12's source generators need **Roslyn 4.14**, which ships with the .NET
+10 SDK. The library targets `net8.0` perfectly well, but an 8.0.x SDK can't run
+its analyzers — so `InitializeComponent()` and every `x:Name` field silently
+fail to generate, and all 14 views fail to compile. It's a warning, not an
+error, which is why the symptom looks like broken code rather than a missing
+tool.
+
+**So v2.3 needs, in this order:**
+
+- [ ] Install the .NET 10 SDK locally
+- [ ] `dotnet-version` in `ci.yml` and `release.yml` → `10.0.x` (the projects can
+      keep targeting `net8.0`; only the build toolchain moves)
+- [ ] Update the README's "you'll need the .NET 8 SDK"
+- [ ] Consider a `global.json` pinning the SDK feature band, so a machine with
+      an older SDK fails loudly rather than mysteriously
+- [ ] Then the actual work: ~50 `/template/` selectors in `Controls.axaml` reach
+      into Fluent internals and will stop applying **silently** rather than
+      failing the build. That needs a visual pass over every control

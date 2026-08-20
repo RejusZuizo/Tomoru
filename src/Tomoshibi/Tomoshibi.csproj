@@ -17,12 +17,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
-    <AvaloniaVersion>11.3.20</AvaloniaVersion>
-    <!-- Avalonia.Diagnostics tracks its own version: it stops at 11.3.20 and
-         has no 12.x at all, so sharing $(AvaloniaVersion) meant any bump past
-         11.x asked NuGet for a package that doesn't exist — which killed the
-         whole Dependabot run, not just this one package. -->
-    <AvaloniaDiagnosticsVersion>11.3.20</AvaloniaDiagnosticsVersion>
+    <AvaloniaVersion>12.1.1</AvaloniaVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,8 +25,10 @@
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
-    <!-- Dev tooling: F12 inspector in Debug only -->
-    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaDiagnosticsVersion)">
+    <!-- Dev tooling: the F12 inspector, Debug only. Avalonia.Diagnostics
+         stopped at 11.3.20 and never shipped a 12.x; DiagnosticsSupport is
+         what replaced it. -->
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
@@ -43,11 +40,10 @@
          backend). LibVLCSharp is the managed binding; the native libvlc comes
          from the per-OS packages below. -->
     <PackageReference Include="LibVLCSharp.Avalonia" Version="3.9.2" />
-    <!-- Pin the patched Tmds.DBus.Protocol over the 0.20.0 that Avalonia
-         pulls in transitively (GHSA-xrw6-gwf8-vvr9, High). Linux D-Bus only;
-         0.21.3 is the backported fix and stays on the 0.21.x line Avalonia
-         11.2.1 expects (the next fix, 0.92.0, is a much larger jump). -->
-    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
+    <!-- The Tmds.DBus.Protocol pin is gone: it existed to force the patched
+         0.21.3 over the vulnerable 0.20.0 that Avalonia 11 pulled in
+         (GHSA-xrw6-gwf8-vvr9, High). Avalonia 12 depends on 0.94.1, which is
+         well past that fix, so pinning now only holds it back. -->
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework.Contains('-windows'))">
