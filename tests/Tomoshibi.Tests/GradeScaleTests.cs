@@ -8,6 +8,7 @@ namespace Tomoshibi.Tests;
 /// <summary>The grade engine is pure percentage→label/points conversion, and
 /// it drives every figure on the subjects page — so its band boundaries are
 /// exactly the kind of off-by-one-prone logic worth pinning down.</summary>
+[Collection(GradeScaleStaticCollection.Name)]
 public class GradeScaleTests
 {
     [Theory]
