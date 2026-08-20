@@ -26,7 +26,7 @@ jobs:
       # than failing, so every InitializeComponent() goes missing instead. The
       # 8.0 SDK stays for the runtime that net8.0 tests execute against.
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
