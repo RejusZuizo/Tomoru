@@ -192,12 +192,12 @@
                                     <StackPanel Width="260" Spacing="10" Margin="8">
                                         <TextBlock Text="締切 · deadline" Classes="jp" />
                                         <CalendarDatePicker SelectedDate="{Binding NewDeadlineDate}" />
-                                        <TextBox Watermark="what's due? (required)"
+                                        <TextBox PlaceholderText="what's due? (required)"
                                                  Text="{Binding NewDeadlineTitle}"
                                                  Classes.invalid="{Binding IsDeadlineTitleInvalid}" />
                                         <TextBlock Classes="formerror" Text="{Binding DeadlineError}"
                                                    IsVisible="{Binding HasDeadlineError}" />
-                                        <AutoCompleteBox Watermark="course"
+                                        <AutoCompleteBox PlaceholderText="course"
                                                          Text="{Binding NewDeadlineCourse}"
                                                          ItemsSource="{Binding KnownCourses}"
                                                          FilterMode="Contains" />

@@ -140,14 +140,14 @@
                         <TextBlock Text="// 新しいデッキ · new deck" Classes="jp" />
                         <Grid ColumnDefinitions="*,140,Auto">
                             <TextBox Grid.Column="0" Text="{Binding NewDeckName}"
-                                     Watermark="deck name… (required)" FontSize="13" Padding="10,6"
+                                     PlaceholderText="deck name… (required)" FontSize="13" Padding="10,6"
                                      Classes.invalid="{Binding IsNewDeckNameInvalid}">
                                 <TextBox.KeyBindings>
                                     <KeyBinding Gesture="Enter" Command="{Binding AddDeckCommand}" />
                                 </TextBox.KeyBindings>
                             </TextBox>
                             <TextBox Grid.Column="1" Text="{Binding NewDeckCourse}"
-                                     Watermark="course" Margin="6,0,0,0" FontSize="13" Padding="10,6" />
+                                     PlaceholderText="course" Margin="6,0,0,0" FontSize="13" Padding="10,6" />
                             <Button Grid.Column="2" Content="+" Classes="icon"
                                     AutomationProperties.Name="add deck" Margin="4,0,0,0"
                                     Command="{Binding AddDeckCommand}" />
@@ -193,13 +193,13 @@
                                 <materialIcons:MaterialIcon Grid.Column="0" Kind="{Binding IconKind}"
                                            Width="26" Height="26" VerticalAlignment="Center" Margin="0,0,10,0"
                                            Foreground="{Binding ColorBrush}" />
-                                <TextBox Grid.Column="1" Text="{Binding Name}" Watermark="deck name" FontSize="16" />
+                                <TextBox Grid.Column="1" Text="{Binding Name}" PlaceholderText="deck name" FontSize="16" />
                             </Grid>
                             <Grid ColumnDefinitions="*,160">
                                 <TextBlock Text="{Binding CountsLabel}" Classes="caption"
                                            VerticalAlignment="Center" />
                                 <TextBox Grid.Column="1" Text="{Binding Course}"
-                                         Watermark="course code" FontSize="13" Padding="10,6" />
+                                         PlaceholderText="course code" FontSize="13" Padding="10,6" />
                             </Grid>
 
                             <!-- icon picker -->
@@ -484,7 +484,7 @@
                 </Grid>
 
                 <TextBox Text="{Binding SearchText}" FontSize="13" Padding="10,6"
-                         Watermark="search — tag:x  deck:y  is:due  is:suspended  note:cloze  -term" />
+                         PlaceholderText="search — tag:x  deck:y  is:due  is:suspended  note:cloze  -term" />
 
                 <!-- bulk actions -->
                 <StackPanel Spacing="6">
@@ -508,7 +508,7 @@
                         </ComboBox>
                         <Button Classes="seg" Content="move" Command="{Binding MoveSelectedCommand}" />
                         <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="4,2" />
-                        <TextBox Text="{Binding BulkTagText}" Watermark="tag" Width="120"
+                        <TextBox Text="{Binding BulkTagText}" PlaceholderText="tag" Width="120"
                                  FontSize="13" Padding="10,4" />
                         <Button Classes="seg" Content="+tag" Command="{Binding AddTagCommand}" />
                         <Button Classes="seg" Content="−tag" Command="{Binding RemoveTagCommand}" />
@@ -601,12 +601,12 @@
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="learning steps (minutes)" Classes="key" />
-                        <TextBox Text="{Binding LearningStepsText}" Watermark="1 10"
+                        <TextBox Text="{Binding LearningStepsText}" PlaceholderText="1 10"
                                  FontSize="13" Padding="10,5" />
                     </StackPanel>
                     <StackPanel Spacing="4">
                         <TextBlock Text="relearning steps (minutes)" Classes="key" />
-                        <TextBox Text="{Binding RelearningStepsText}" Watermark="10"
+                        <TextBox Text="{Binding RelearningStepsText}" PlaceholderText="10"
                                  FontSize="13" Padding="10,5" />
                     </StackPanel>
 

@@ -119,7 +119,7 @@
                         </Grid>
                         <TextBox Classes="inline" Text="{Binding Today.DailyIntention}"
                                  Classes.kept="{Binding Today.IntentionKept}"
-                                 Watermark="what do you want to do today?" FontSize="16" />
+                                 PlaceholderText="what do you want to do today?" FontSize="16" />
                         <TextBlock Text="{Binding Today.IntentionHint}" Classes="caption"
                                    IsVisible="{Binding Today.IntentionHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
@@ -128,7 +128,7 @@
 
                         <TextBlock Text="// 振り返り · reflection" Classes="jp" />
                         <TextBox Classes="inline" Text="{Binding Today.DailyReflection}"
-                                 Watermark="how did today go?" FontSize="14"
+                                 PlaceholderText="how did today go?" FontSize="14"
                                  AcceptsReturn="True" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
