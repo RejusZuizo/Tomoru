@@ -24,3 +24,7 @@ Thumbs.db
 # local app data (tomoshibi writes its json to the OS app-data folder, not the repo,
 # but ignore any stray copies dropped in the working tree)
 *.tomoshibi.json
+# Running the app from the repo without XDG_CONFIG_HOME set drops a whole
+# profile directory here — state, decks and crash logs. The pattern above only
+# catches loose json files, not the folder they usually arrive in.
+/Tomoshibi/
