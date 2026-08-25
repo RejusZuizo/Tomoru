@@ -496,6 +496,10 @@
                         <Button Classes="seg" Content="unsuspend" Command="{Binding UnsuspendSelectedCommand}" />
                         <Button Classes="seg" Content="bury" Command="{Binding BurySelectedCommand}" />
                         <Button Classes="seg" Content="delete" Command="{Binding DeleteSelectedCommand}" />
+                        <!-- Why the bulk buttons are greyed out, rather than
+                             leaving it to be guessed. -->
+                        <TextBlock Text="{Binding SelectionLabel}" Classes="caption"
+                                   VerticalAlignment="Center" Margin="6,0,0,0" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <ComboBox ItemsSource="{Binding Decks}" SelectedItem="{Binding MoveTargetDeck}"

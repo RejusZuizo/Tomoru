@@ -30,6 +30,30 @@ public partial class CardBrowserViewModel : ViewModelBase
 
     public ObservableCollection<BrowserRowViewModel> Rows { get; } = new();
 
+    /// <summary>How many rows are ticked. Every bulk action works on the
+    /// selection, so this drives whether they can run at all — they used to be
+    /// permanently enabled and silently do nothing when nothing was ticked,
+    /// which reads as four broken buttons rather than a missing step.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
+    [NotifyPropertyChangedFor(nameof(SelectionLabel))]
+    [NotifyCanExecuteChangedFor(nameof(SuspendSelectedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UnsuspendSelectedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(BurySelectedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteSelectedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MoveSelectedCommand))]
+    [NotifyCanExecuteChangedFor(nameof(AddTagCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RemoveTagCommand))]
+    private int _selectedCount;
+
+    public bool HasSelection => SelectedCount > 0;
+
+    /// <summary>Sits next to the bulk buttons so the disabled state has a
+    /// reason attached rather than just being grey.</summary>
+    public string SelectionLabel => SelectedCount == 0
+        ? "tick some cards to act on them"
+        : SelectedCount == 1 ? "1 selected" : $"{SelectedCount} selected";
+
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _resultLabel = string.Empty;
     [ObservableProperty] private string _bulkTagText = string.Empty;
@@ -73,6 +97,9 @@ public partial class CardBrowserViewModel : ViewModelBase
     private void ApplyFilter()
     {
         var predicate = SearchQueryParser.Parse(SearchText, DateTime.Now);
+
+        foreach (var old in Rows)
+            old.PropertyChanged -= OnRowChanged;
         Rows.Clear();
 
         var shown = 0;
@@ -85,10 +112,14 @@ public partial class CardBrowserViewModel : ViewModelBase
             total++;
             if (shown < MaxRows)
             {
-                Rows.Add(new BrowserRowViewModel(deck, note, card));
+                var row = new BrowserRowViewModel(deck, note, card);
+                row.PropertyChanged += OnRowChanged;
+                Rows.Add(row);
                 shown++;
             }
         }
+
+        RecountSelection();
 
         ResultLabel = total > MaxRows
             ? $"showing {MaxRows} of {total} cards"
@@ -97,32 +128,42 @@ public partial class CardBrowserViewModel : ViewModelBase
 
     private IEnumerable<BrowserRowViewModel> Selected => Rows.Where(r => r.IsSelected);
 
+    private void OnRowChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(BrowserRowViewModel.IsSelected))
+            RecountSelection();
+    }
+
+    private void RecountSelection() => SelectedCount = Rows.Count(r => r.IsSelected);
+
     [RelayCommand]
     private void SelectAll()
     {
         foreach (var r in Rows) r.IsSelected = true;
+        RecountSelection();
     }
 
     [RelayCommand]
     private void SelectNone()
     {
         foreach (var r in Rows) r.IsSelected = false;
+        RecountSelection();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void SuspendSelected() => Bulk(r => r.Card.Suspended = true);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void UnsuspendSelected() => Bulk(r => r.Card.Suspended = false);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void BurySelected()
     {
         var tomorrow = DateOnly.FromDateTime(DateTime.Now).AddDays(1);
         Bulk(r => r.Card.BuriedUntil = tomorrow);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void DeleteSelected()
     {
         var victims = Selected.ToList();
@@ -150,7 +191,7 @@ public partial class CardBrowserViewModel : ViewModelBase
         AfterBulk();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void MoveSelected()
     {
         if (MoveTargetDeck is null) return;
@@ -167,7 +208,7 @@ public partial class CardBrowserViewModel : ViewModelBase
         ApplyFilter(); // deck column changed for moved rows
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void AddTag()
     {
         var tag = BulkTagText.Trim();
@@ -176,7 +217,7 @@ public partial class CardBrowserViewModel : ViewModelBase
         BulkTagText = string.Empty;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(HasSelection))]
     private void RemoveTag()
     {
         var tag = BulkTagText.Trim();
