@@ -1,17 +1,17 @@
 # Architecture
 
-A short tour of how tomoshibi is put together and why.
+A short tour of how tomoru is put together and why.
 
 ## The shape of it
 
-tomoshibi is a single-project Avalonia desktop app on .NET 8, using MVVM via
+tomoru is a single-project Avalonia desktop app on .NET 8, using MVVM via
 CommunityToolkit.Mvvm. One codebase publishes to Windows, macOS and Linux as a
 self-contained download — no runtime install required on the target machine.
 
 The project follows a conventional layered layout:
 
 ```
-src/Tomoshibi/
+src/Tomoru/
   Models/        plain data: AppState, DailyStats, ClassSlot, TodoItem,
                  Subject + Assessment, Deck + Flashcard, DayNote, the enums
                  (Destination, WeekDay, GradeScaleKind, …)
@@ -44,7 +44,7 @@ src/Tomoshibi/
   App.axaml      app entry, theme + resource wiring
   ViewLocator    maps a view model to its view by naming convention
 
-tests/Tomoshibi.Tests/     xUnit tests over the pure logic (see Testing
+tests/Tomoru.Tests/     xUnit tests over the pure logic (see Testing
                            approach, below)
 scripts/                   packaging scripts per platform
 docs/                      roadmap, architecture, screenshots
@@ -221,7 +221,7 @@ outside its own modals and nowhere else to put an error:
 - `Notice` is the one-line banner it surfaces on, a single static instance
   because the app is one window and threading a path to the shell through
   fifteen file handlers isn't worth the wiring.
-- `ErrorLog` writes the detail next to `tomoshibi.json`, keeping crashes
+- `ErrorLog` writes the detail next to `tomoru.json`, keeping crashes
   (`crash-*.log`) and handled failures (`error-*.log`) in separate files so one
   can't bury the other.
 

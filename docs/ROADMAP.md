@@ -1,6 +1,6 @@
 # Roadmap
 
-Tomoshibi ships a lean **v1.0** as soon as the core app is polished, then grows
+Tomoru ships a lean **v1.0** as soon as the core app is polished, then grows
 through small versioned releases. Dates are targets, not promises — the point is a
 sensible order of work.
 
@@ -316,7 +316,7 @@ anything there starts changing often.
 ## Out of scope (for now)
 
 Deliberately off the list to keep things focused: cloud sync, accounts, mobile,
-multi-profile, and any always-on network features. Tomoshibi is a local-first,
+multi-profile, and any always-on network features. Tomoru is a local-first,
 single-user desktop app.
 
 ## v2.3 — Avalonia 12 (on main; one check away from tagging)

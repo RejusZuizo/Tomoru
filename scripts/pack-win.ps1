@@ -1,23 +1,23 @@
-# Build a self-contained Tomoshibi folder + zip for Windows.
+# Build a self-contained Tomoru folder + zip for Windows.
 #
 #   .\scripts\pack-win.ps1            # x64
 #   .\scripts\pack-win.ps1 win-arm64  # ARM
 #
-# Output: dist\Tomoshibi-win-<arch>.zip — unzip anywhere and run Tomoshibi.exe.
+# Output: dist\Tomoru-win-<arch>.zip — unzip anywhere and run Tomoru.exe.
 # The EXE icon comes from Assets\icon.ico via the csproj.
 #
 # NOTE: written on macOS, since verified on a real Windows box — publishes,
-# zips, and the extracted Tomoshibi.exe runs.
+# zips, and the extracted Tomoru.exe runs.
 
 param([string]$Rid = "win-x64")
 
 $ErrorActionPreference = "Stop"
 
 $Root    = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$Project = Join-Path $Root "src\Tomoshibi"
+$Project = Join-Path $Root "src\Tomoru"
 $Dist    = Join-Path $Root "dist"
 $Publish = Join-Path $Dist "publish-$Rid"
-$Zip     = Join-Path $Dist "Tomoshibi-$Rid.zip"
+$Zip     = Join-Path $Dist "Tomoru-$Rid.zip"
 
 Write-Host "publishing for $Rid ..."
 if (Test-Path $Publish) { Remove-Item -Recurse -Force $Publish }

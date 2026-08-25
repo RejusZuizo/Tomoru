@@ -33,10 +33,10 @@ jobs:
             10.0.x
 
       - name: Restore
-        run: dotnet restore Tomoshibi.sln
+        run: dotnet restore Tomoru.sln
 
       - name: Build
-        run: dotnet build Tomoshibi.sln --configuration Release --no-restore
+        run: dotnet build Tomoru.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test Tomoshibi.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test Tomoru.sln --configuration Release --no-build --verbosity normal

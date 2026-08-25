@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in tomoshibi doesn't work the way it should.
+description: Something in tomoru doesn't work the way it should.
 labels: ["bug"]
 body:
   - type: markdown

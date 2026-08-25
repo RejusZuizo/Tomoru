@@ -28,9 +28,9 @@ A local-first, single-user desktop study app. No accounts, no server, no sync,
 no multi-user access. Everything it knows lives in one JSON file plus a media
 folder under the user's own profile:
 
-- Linux — `~/.config/Tomoshibi/`
-- macOS — `~/Library/Application Support/Tomoshibi/`
-- Windows — `%APPDATA%\Tomoshibi\`
+- Linux — `~/.config/Tomoru/`
+- macOS — `~/Library/Application Support/Tomoru/`
+- Windows — `%APPDATA%\Tomoru\`
 
 It holds coursework: subjects, grades, deadlines, timetable, flashcards, notes
 and a reflection journal. Personal, but the user's own, on their own machine.
