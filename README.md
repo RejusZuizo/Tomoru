@@ -20,54 +20,80 @@ machine, and it works with the wifi off.
 
 ![a run through tomoshibi — grades, a subject breakdown, the focus streak and a spaced-repetition review session](docs/screenshots/demo.gif)
 
+## Download & install
+
+Grab the build for your OS from the
+[releases page](https://github.com/socom1/Tomoshibi/releases/latest), unzip,
+and run. The builds are self-contained — no .NET install needed.
+
+The builds aren't code-signed (yet), so on first launch your OS will be
+suspicious on your behalf:
+
+- **macOS** — Gatekeeper says the app "cannot be opened because it is from an
+  unidentified developer". Right-click the app → **Open** → **Open** once;
+  after that it launches normally.
+- **Windows** — SmartScreen shows "Windows protected your PC". Click
+  **More info** → **Run anyway** once.
+- **Linux** — no warning to click through. Extract the tarball anywhere and
+  run `Tomoshibi`, or drop `tomoshibi.desktop` into
+  `~/.local/share/applications` (fix its `Exec`/`Icon` paths to wherever you
+  extracted) to get it in your app menu.
+
+The app tells you in settings when a newer release is out (you can turn that
+check off).
+
+**On Linux, install `libvlc` for audio.** The build carries everything else,
+but the media service loads the system libvlc — without it the app runs fine
+and simply stays quiet: flashcard audio and video, and the music player, do
+nothing. On Arch that's `sudo pacman -S vlc`; on Debian/Ubuntu,
+`sudo apt install libvlc-dev vlc`.
+
 ## Features
 
-- **Dashboard** — a morning landing page that pulls a glance together: today's
-  intention and focus, the week's momentum, the next seven days' agenda, what's
-  due, your grade standing, the subjects that need work, and quick links.
-- **Pomodoro timer** — focus/break cycles with a longer break after every Nth
-  round, a soft chime and a native notification on phase change, auto-continue,
-  and a progress bar. The active task can override the phase lengths, and a
-  global hotkey (`ctrl+alt+P` / `⌃⌥P`) starts or pauses from any app.
-- **Zen mode** — full-screen, just the clock, your intention and the controls.
-- **Daily intention & journal** — one line to set the day's focus, an
-  end-of-day reflection on how it went; both bank into a journal look-back at
-  the midnight rollover.
-- **Tasks as code** — today's plan written in a tiny template grammar
-  (`// title`, `study: 25`, `course: MATH101`, `done`), edited in a simple
-  list, a form, or raw source. Click a task to make it drive the timer.
-- **Timetable** — weekly class schedule on a week grid (or list) plus dated
-  deadlines, with `.ics` import for university timetable exports. While a
-  class is on, the timer offers it as a one-click focus so the session lands
-  on the right course.
-- **Todo backlog** — longer-horizon coursework as numbered tickets with
-  statuses, priorities, due dates, effort estimates and subtask checklists;
-  send an item to today's plan with one click.
-- **Subjects & grades** — track assessments per subject against a grade scale
-  (US GPA, letter bands or your own custom boundaries), weight years, set an
-  overall goal and see what each remaining piece needs to hit it.
-- **Flashcards** — spaced-repetition decks scheduled by **FSRS**, the same
-  modern algorithm Anki uses. If you've used Anki the loop will feel familiar:
-  again / hard / good / easy, each button showing the interval it buys you.
-  Cloze deletions, image occlusion, note types that generate several cards, and
-  a searchable card browser. **Import your existing collection** — `.apkg`
-  files are read directly, and Anki-compatible text imports and exports both
-  ways. Tomoshibi isn't affiliated with Anki; it reads its files because that's
-  where everyone's decks already are.
-- **Focus stats & streak** — a month calendar tinted by focus, current and best
-  streak, a 14-day sparkline, focus-by-course, an auto-written weekly
-  retrospective, and the journal look-back.
-- **Command palette** — `Cmd/Ctrl+K` to jump to any page, run a quick action,
-  or search straight to a subject, todo ticket, deck or past reflection.
-- **Deadline reminders** — desktop notifications as exams and due dates
-  approach, fired once on the way in and again on the day.
-- **Themes & embers** — earn embers as you focus and spend them in a small shop
-  on extra colour themes; a music player can loop a local folder while you work.
-- **Local-first** — all data in a single JSON file on your computer, written
-  atomically with a `.bak` fallback; no account, no telemetry. One-click backup
-  to a file of your choosing, and restore reads it straight back. The one
-  optional network touch is a launch-time update check — a single version ask
-  of GitHub you can switch off.
+The **dashboard** is the morning landing page — today's intention and focus so
+far, the week's momentum, the next seven days' agenda, what's due, where the
+grades stand and which subjects need work. `Cmd/Ctrl+K` opens a **command
+palette** that jumps to any page, runs a quick action, or searches straight to
+a subject, todo ticket, deck or past reflection.
+
+At the centre is the **Pomodoro timer**: focus and break cycles with a longer
+break every Nth round, a soft chime and a native notification when the phase
+turns, auto-continue, and a global hotkey (`ctrl+alt+P` / `⌃⌥P`) that starts or
+pauses from any app. **Zen mode** strips it back to the clock, your intention
+and the controls. Today's plan is **written as code** — a tiny grammar of
+`// title`, `study: 25`, `course: MATH101`, `done` — edited as a simple list, a
+form, or raw source; click a task and it drives the timer. One line sets the
+day's **intention** and another reflects on how it went, and both bank into the
+**journal** at the midnight rollover.
+
+Around that sits the coursework. The **timetable** holds your week's classes on
+a grid (or a list) alongside dated deadlines, with `.ics` import for university
+exports; while a class is on, the timer offers it as a one-click focus so the
+session lands on the right course. The **todo backlog** keeps longer-horizon
+work as numbered tickets — statuses, priorities, due dates, effort estimates,
+subtask checklists — any of which goes to today's plan with a click. **Grades**
+are per-subject assessments weighted against a scale you choose (US GPA, letter
+bands, or boundaries you set yourself), with an overall goal and what each
+remaining piece needs to reach it. **Deadline reminders** arrive as desktop
+notifications once as a date approaches and again on the day.
+
+**Flashcards** are scheduled by FSRS, the same modern algorithm Anki uses. If
+you've used Anki the loop will feel familiar: again / hard / good / easy, each
+button showing the interval it buys you. There are cloze deletions, image
+occlusion, note types that generate several cards from one, and a searchable
+card browser. Your existing collection comes across directly — `.apkg` files
+are read as-is, and Anki-compatible text imports and exports work both ways.
+Tomoshibi isn't affiliated with Anki; it reads its files because that's where
+everyone's decks already are.
+
+**Focus stats** put the history in view: a month calendar tinted by focus,
+current and best streak, a 14-day sparkline, focus-by-course, an auto-written
+weekly retrospective and the journal look-back. Focus also earns **embers**,
+spent in a small shop on extra colour themes, and a music player will loop a
+local folder while you work. All of it is **local-first** — one JSON file on
+your computer, written atomically with a `.bak` fallback, backed up to a file
+of your choosing and restored straight back. No account, no telemetry; the one
+optional network touch is a launch-time update check you can switch off.
 
 What's planned next is in [docs/ROADMAP.md](docs/ROADMAP.md); what's already
 changed is in [CHANGELOG.md](CHANGELOG.md).
@@ -86,67 +112,10 @@ changed is in [CHANGELOG.md](CHANGELOG.md).
 Avalonia + .NET 8, MVVM with CommunityToolkit.Mvvm. One codebase, published
 self-contained for Windows, macOS and Linux. The rules that matter — the
 Pomodoro state machine, the FSRS scheduler, the grade engine, the importers —
-are pure types with no UI attached, which is why 232 tests can drive them.
-Architecture notes are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); how to
-report a vulnerability is in [SECURITY.md](SECURITY.md).
-
-## Project layout
-
-```
-Tomoshibi.sln
-src/Tomoshibi/
-  Models/        data classes (AppState, ClassSlot, TodoItem, Subject,
-                 Deck, DayNote, …)
-  Services/      side effects behind interfaces (storage, sound, music,
-                 notifications + reminders) plus the pure logic: the
-                 Pomodoro state machine, the FSRS scheduler, the task-template
-                 parser, the .ics importer, the .apkg and text deck
-                 readers/writers, grade scales, the weekly retrospective
-                 writer, the daily reset and the state migrations
-  ViewModels/    UI state + behaviour, one per destination + the shell
-  Views/         .axaml UI (MainWindow shell + one view per destination:
-                 Dashboard, Today, Timetable, Todo, Subjects, Stats,
-                 Review, Shop, Settings)
-  Styles/        Tokyo Night palette + control styles
-  Assets/        icon (png/ico/icns) + chime
-tests/Tomoshibi.Tests/   232 xUnit tests over the pure logic (Pomodoro state
-                 machine, FSRS scheduler, grade engine, task-template parser,
-                 storage round-trip + crash recovery, daily reset, state
-                 migrations, .ics importer, deck files, card generation,
-                 cloze + occlusion, search parser, weekly retrospective)
-scripts/         packaging scripts per platform
-docs/            roadmap, architecture, screenshots
-.github/workflows/ci.yml   build + test on every push/PR, across win/mac/linux
-```
-
-## Download & install
-
-Grab the build for your OS from the
-[releases page](https://github.com/socom1/Tomoshibi/releases/latest), unzip,
-and run. The builds are self-contained — no .NET install needed.
-
-The builds aren't code-signed (yet), so on first launch your OS will be
-suspicious on your behalf:
-
-- **macOS** — Gatekeeper says the app "cannot be opened because it is from an
-  unidentified developer". Right-click the app → **Open** → **Open** once;
-  after that it launches normally.
-- **Windows** — SmartScreen shows "Windows protected your PC". Click
-  **More info** → **Run anyway** once.
-
-- **Linux** — no warning to click through. Extract the tarball anywhere and
-  run `Tomoshibi`, or drop `tomoshibi.desktop` into
-  `~/.local/share/applications` (fix its `Exec`/`Icon` paths to wherever you
-  extracted) to get it in your app menu.
-
-The app tells you in settings when a newer release is out (you can turn that
-check off).
-
-**On Linux, install `libvlc` for audio.** The build carries everything else,
-but the media service loads the system libvlc — without it the app runs fine
-and simply stays quiet: flashcard audio and video, and the music player, do
-nothing. On Arch that's `sudo pacman -S vlc`; on Debian/Ubuntu,
-`sudo apt install libvlc-dev vlc`.
+are pure types with no UI attached, which is why 232 tests can drive them. The
+project layout and the reasoning behind it are in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); how to report a vulnerability is
+in [SECURITY.md](SECURITY.md).
 
 ## Building from source
 
