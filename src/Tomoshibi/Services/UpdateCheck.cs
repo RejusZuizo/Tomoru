@@ -47,8 +47,8 @@ public readonly record struct UpdateCheckResult(UpdateStatus Status, string? Tag
 /// </summary>
 public static class UpdateCheck
 {
-    public const string ReleasesUrl = "https://github.com/socom1/Tomoshibi/releases/latest";
-    private const string ApiUrl = "https://api.github.com/repos/socom1/Tomoshibi/releases/latest";
+    public const string ReleasesUrl = "https://github.com/RejusZuizo/Tomoshibi/releases/latest";
+    private const string ApiUrl = "https://api.github.com/repos/RejusZuizo/Tomoshibi/releases/latest";
 
     /// <summary>Is <paramref name="tag"/> ("v2.1.0" or "2.1.0") newer than
     /// <paramref name="current"/>? Unparseable input reads as "no".</summary>
