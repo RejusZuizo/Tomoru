@@ -22,6 +22,7 @@ public partial class CardBrowserViewModel : ViewModelBase
     private const int MaxRows = 1000;
 
     private readonly AppState _state;
+    private readonly ConfirmDeleteViewModel _confirm;
     private readonly Action _save;
     private readonly Action _refreshDecks;
     private readonly MediaStore _media;
@@ -43,8 +44,10 @@ public partial class CardBrowserViewModel : ViewModelBase
 
     public IReadOnlyList<Deck> Decks => _state.Decks;
 
-    public CardBrowserViewModel(AppState state, Action save, Action refreshDecks, MediaStore media)
+    public CardBrowserViewModel(AppState state, Action save, Action refreshDecks, MediaStore media,
+                                ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         _state = state;
         _save = save;
         _refreshDecks = refreshDecks;
@@ -125,6 +128,16 @@ public partial class CardBrowserViewModel : ViewModelBase
         var victims = Selected.ToList();
         if (victims.Count == 0) return;
 
+        // The one that can take the most in a single click: a select-all in
+        // the browser is however many cards the filter matched.
+        _confirm.Ask("削除 · delete cards",
+                     victims.Count == 1 ? "1 card" : $"{victims.Count} cards",
+                     "their review history goes with them, and this can't be undone.",
+                     () => Delete(victims));
+    }
+
+    private void Delete(List<BrowserRowViewModel> victims)
+    {
         foreach (var r in victims)
         {
             r.Note.Cards.Remove(r.Card);
@@ -168,8 +181,22 @@ public partial class CardBrowserViewModel : ViewModelBase
     {
         var tag = BulkTagText.Trim();
         if (tag.Length == 0) return;
-        Bulk(r => r.Note.Tags.RemoveAll(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
-        BulkTagText = string.Empty;
+
+        // Bulk, and silent about its reach: this strips the tag from every
+        // selected note at once, however many the filter matched.
+        var count = Selected.Count();
+        if (count == 0) return;
+
+        _confirm.Ask("削除 · remove tag", tag,
+                     count == 1
+                         ? "it comes off 1 note. this can't be undone."
+                         : $"it comes off {count} notes. this can't be undone.",
+                     () =>
+                     {
+                         Bulk(r => r.Note.Tags.RemoveAll(
+                             t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase)));
+                         BulkTagText = string.Empty;
+                     });
     }
 
     private void Bulk(Action<BrowserRowViewModel> action)

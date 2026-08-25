@@ -17,7 +17,8 @@ public class TodoViewModelTests
         var state = new AppState { NextTodoNumber = 100 };
         state.Todos.AddRange(todos);
         var saves = 0;
-        var vm = new TodoViewModel(state, () => saves++, _ => { });
+        var confirm = new ConfirmDeleteViewModel();
+        var vm = new TodoViewModel(state, () => saves++, _ => { }, confirm);
         return (vm, state, () => saves);
     }
 

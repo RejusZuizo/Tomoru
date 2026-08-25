@@ -27,6 +27,7 @@ public partial class TodoViewModel : ViewModelBase
 {
     private readonly AppState _state;
     private readonly Action _save;
+    private readonly ConfirmDeleteViewModel _confirm;
     private readonly Action<TodoItem> _sendToToday;
 
     private TodoItem? _editing;
@@ -97,8 +98,10 @@ public partial class TodoViewModel : ViewModelBase
     /// <summary>Repeat options for the form's picker.</summary>
     public IReadOnlyList<RepeatRule> RepeatOptions { get; } = Enum.GetValues<RepeatRule>();
 
-    public TodoViewModel(AppState state, Action save, Action<TodoItem> sendToToday)
+    public TodoViewModel(AppState state, Action save, Action<TodoItem> sendToToday,
+                         ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         _state = state;
         _save = save;
         _sendToToday = sendToToday;
@@ -235,6 +238,15 @@ public partial class TodoViewModel : ViewModelBase
     {
         if (item is null)
             return;
+
+        // A ticket carries its subtask checklist, and nothing here is undoable.
+        _confirm.Ask("削除 · delete ticket", item.Model.Title,
+                     ConfirmDeleteViewModel.Detailing(item.Model.Subtasks.Count, "subtask", "subtasks"),
+                     () => Delete(item));
+    }
+
+    private void Delete(TodoItemViewModel item)
+    {
 
         if (item.Model == _editing)
         {

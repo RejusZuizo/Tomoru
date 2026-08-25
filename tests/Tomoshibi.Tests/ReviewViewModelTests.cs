@@ -61,14 +61,15 @@ public class ReviewViewModelTests : IDisposable
         return deck;
     }
 
-    private (ReviewViewModel Vm, AppState State, NullLog Log) Vm(params Deck[] decks)
+    private (ReviewViewModel Vm, AppState State, NullLog Log, ConfirmDeleteViewModel Confirm) Vm(params Deck[] decks)
     {
         var state = new AppState();
         state.Decks.AddRange(decks);
         var log = new NullLog();
         var wallet = new WalletViewModel(state, () => { });
-        var vm = new ReviewViewModel(state, () => { }, wallet, log, new MediaStore(_dir));
-        return (vm, state, log);
+        var confirm = new ConfirmDeleteViewModel();
+        var vm = new ReviewViewModel(state, () => { }, wallet, log, new MediaStore(_dir), confirm);
+        return (vm, state, log, confirm);
     }
 
     // ---- starting a session ----
@@ -76,7 +77,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void Reviewing_everything_picks_up_the_due_cards() => Headless.Run(() =>
     {
-        var (vm, _, _) = Vm(Deck("kanji", "火", "水"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火", "水"));
 
         vm.ReviewAllCommand.Execute(null);
 
@@ -89,7 +90,7 @@ public class ReviewViewModelTests : IDisposable
     {
         // An empty queue backs out before anything is set up, rather than
         // starting a session with no card in it.
-        var (vm, _, _) = Vm(new Deck { Name = "empty" });
+        var (vm, _, _, _) = Vm(new Deck { Name = "empty" });
 
         vm.ReviewAllCommand.Execute(null);
 
@@ -102,7 +103,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void A_card_keeps_its_answer_back_until_asked() => Headless.Run(() =>
     {
-        var (vm, _, _) = Vm(Deck("kanji", "火"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火"));
         vm.ReviewAllCommand.Execute(null);
 
         Assert.False(vm.IsFlipped);
@@ -117,7 +118,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void The_prompt_stays_up_beside_the_answer_by_default() => Headless.Run(() =>
     {
-        var (vm, _, _) = Vm(Deck("kanji", "火"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火"));
         vm.ReviewAllCommand.Execute(null);
         vm.FlipCommand.Execute(null);
 
@@ -128,7 +129,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void The_anki_style_flip_replaces_the_prompt_instead() => Headless.Run(() =>
     {
-        var (vm, state, _) = Vm(Deck("kanji", "火"));
+        var (vm, state, _, _) = Vm(Deck("kanji", "火"));
         state.ReviewHideFrontOnReveal = true;
         vm.ReviewAllCommand.Execute(null);
 
@@ -143,7 +144,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void Grading_a_card_moves_on_to_the_next_one() => Headless.Run(() =>
     {
-        var (vm, _, _) = Vm(Deck("kanji", "火", "水"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火", "水"));
         vm.ReviewAllCommand.Execute(null);
         vm.FlipCommand.Execute(null);
         var first = vm.CardFrontSource;
@@ -160,7 +161,7 @@ public class ReviewViewModelTests : IDisposable
     {
         // You have to have seen the answer before you can say you knew it —
         // otherwise a stray keypress grades a card nobody read.
-        var (vm, _, log) = Vm(Deck("kanji", "火"));
+        var (vm, _, log, _) = Vm(Deck("kanji", "火"));
         vm.ReviewAllCommand.Execute(null);
 
         vm.GradeGoodCommand.Execute(null);
@@ -176,7 +177,7 @@ public class ReviewViewModelTests : IDisposable
         // same session, so "one card, one grade" doesn't end it. What matters
         // is that repeating does — a queue that never drains is a page you
         // can't leave.
-        var (vm, _, _) = Vm(Deck("kanji", "火"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火"));
         vm.ReviewAllCommand.Execute(null);
 
         for (var i = 0; i < 20 && !vm.IsSessionDone; i++)
@@ -193,7 +194,7 @@ public class ReviewViewModelTests : IDisposable
     {
         // The log is what the stats page reads; a review that isn't recorded
         // is a review that didn't happen as far as the streak is concerned.
-        var (vm, _, log) = Vm(Deck("kanji", "火", "水"));
+        var (vm, _, log, _) = Vm(Deck("kanji", "火", "水"));
         vm.ReviewAllCommand.Execute(null);
 
         vm.FlipCommand.Execute(null);
@@ -209,7 +210,7 @@ public class ReviewViewModelTests : IDisposable
     {
         // "again" means they didn't know it. It has to come round again in the
         // same session, or the button quietly means "skip".
-        var (vm, state, _) = Vm(Deck("kanji", "火"));
+        var (vm, state, _, _) = Vm(Deck("kanji", "火"));
         vm.ReviewAllCommand.Execute(null);
         vm.FlipCommand.Execute(null);
 
@@ -225,7 +226,7 @@ public class ReviewViewModelTests : IDisposable
     [Fact]
     public void Opening_a_deck_scopes_the_session_to_it() => Headless.Run(() =>
     {
-        var (vm, _, _) = Vm(Deck("kanji", "火"), Deck("vocab", "犬"));
+        var (vm, _, _, _) = Vm(Deck("kanji", "火"), Deck("vocab", "犬"));
 
         var kanji = Assert.Single(vm.Decks, d => d.Model.Name == "kanji");
         vm.ReviewDeckCommand.Execute(kanji);
@@ -235,18 +236,42 @@ public class ReviewViewModelTests : IDisposable
     });
 
     [Fact]
-    public void Deleting_a_deck_takes_it_immediately_and_asks_nothing() => Headless.Run(() =>
+    public void Deleting_a_deck_asks_first_and_says_what_goes() => Headless.Run(() =>
     {
-        // Pinning what it does, not what it ought to. One click on the trash
-        // icon takes the deck, its notes, its cards and their scheduling
-        // history, with no confirmation and no undo — while deleting a subject,
-        // which loses less, does ask. If that gap gets closed this test is
-        // where it will fail, which is the point of writing it down.
-        var (vm, state, _) = Vm(Deck("kanji", "火", "水"));
+        var (vm, state, _, confirm) = Vm(Deck("kanji", "火", "水"));
 
         vm.DeleteDeckCommand.Execute(vm.Decks[0]);
 
+        Assert.True(confirm.IsOpen);
+        Assert.Equal("kanji", confirm.Name);
+        Assert.Contains("2 cards", confirm.Detail);
+        Assert.Contains("can't be undone", confirm.Detail);
+        Assert.Single(state.Decks);   // nothing gone yet
+    });
+
+    [Fact]
+    public void Confirming_takes_the_deck() => Headless.Run(() =>
+    {
+        var (vm, state, _, confirm) = Vm(Deck("kanji", "火"));
+
+        vm.DeleteDeckCommand.Execute(vm.Decks[0]);
+        confirm.ConfirmCommand.Execute(null);
+
         Assert.Empty(state.Decks);
         Assert.Empty(vm.Decks);
+        Assert.False(confirm.IsOpen);
+    });
+
+    [Fact]
+    public void Backing_out_keeps_the_deck() => Headless.Run(() =>
+    {
+        var (vm, state, _, confirm) = Vm(Deck("kanji", "火"));
+
+        vm.DeleteDeckCommand.Execute(vm.Decks[0]);
+        confirm.CancelCommand.Execute(null);
+
+        Assert.Single(state.Decks);
+        Assert.Single(vm.Decks);
+        Assert.False(confirm.IsOpen);
     });
 }

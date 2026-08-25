@@ -27,7 +27,7 @@
         <KeyBinding Gesture="Escape" Command="{Binding Todo.CancelModalCommand}" />
         <!-- Ahead of the other subjects escapes: dismissing the delete prompt
              shouldn't also close the page underneath it. -->
-        <KeyBinding Gesture="Escape" Command="{Binding Subjects.CancelRemoveCommand}" />
+        <KeyBinding Gesture="Escape" Command="{Binding ConfirmDelete.CancelCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.CancelModalCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.SelectedSubject.CancelAssessmentModalCommand}" />
         <KeyBinding Gesture="Escape" Command="{Binding Subjects.CloseDetailCommand}" />
@@ -348,37 +348,41 @@
         </Border>
     </Border>
 
-    <!-- Delete-subject confirmation. The ✕ on a subject card stages the row
-         here rather than deleting outright: a subject carries its whole
-         assessment history and there's no undo. Cancel is the default-looking
-         button; delete wears sakura so it reads as the destructive one. -->
+    <!-- The app's one delete confirmation. Every ✕ that would destroy saved
+         work stages it here rather than deleting outright, and the prompt says
+         what goes with it. One modal, not one per page: the copy that matters
+         is exactly what gets dropped when each page rolls its own — which is
+         how deleting a deck ended up taking an imported collection and months
+         of scheduling on a single click, while deleting a subject asked first.
+         Cancel is the default-looking button; delete wears sakura so it reads
+         as the destructive one. -->
     <Border Classes="modal-backdrop"
-            IsVisible="{Binding Subjects.IsRemoveConfirmOpen}"
-            Classes.open="{Binding Subjects.IsRemoveConfirmOpen}"
+            IsVisible="{Binding ConfirmDelete.IsOpen}"
+            Classes.open="{Binding ConfirmDelete.IsOpen}"
             Background="#A0000000">
         <Border Classes="card modal-card"
                 Width="360" Padding="22"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                DataContext="{Binding Subjects}"
+                DataContext="{Binding ConfirmDelete}"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
                 <ScaleTransform ScaleX="1" ScaleY="1" />
             </Border.RenderTransform>
             <StackPanel Spacing="12">
-                <TextBlock Text="削除 · delete subject" Classes="jp" />
+                <TextBlock Text="{Binding Title}" Classes="jp" />
 
-                <TextBlock Text="{Binding RemoveConfirmName}" FontWeight="SemiBold"
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                            TextWrapping="Wrap" />
-                <TextBlock Text="{Binding RemoveConfirmDetail}" Classes="caption"
+                <TextBlock Text="{Binding Detail}" Classes="caption"
                            TextWrapping="Wrap" />
 
                 <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
                     <Button Grid.Column="0" Content="keep it"
                             HorizontalAlignment="Stretch"
-                            Command="{Binding CancelRemoveCommand}" />
+                            Command="{Binding CancelCommand}" />
                     <Button Grid.Column="1" Content="delete" Classes="danger"
                             HorizontalAlignment="Stretch" Margin="8,0,0,0"
-                            Command="{Binding ConfirmRemoveCommand}" />
+                            Command="{Binding ConfirmCommand}" />
                 </Grid>
             </StackPanel>
         </Border>

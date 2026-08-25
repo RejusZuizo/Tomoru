@@ -144,6 +144,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// space-to-toggle) stand down so a dialog keeps the stage.</summary>
     public bool AnyModalOpen =>
         IsCommandPaletteOpen || IsWelcomeOpen || IsWhatsNewOpen || IsTourOpen
+        || ConfirmDelete.IsOpen
         || Today.Tasks.IsAddTaskModalOpen
         || Todo.IsModalOpen
         || Subjects.IsModalOpen
@@ -189,6 +190,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     /// <summary>The themes shop.</summary>
     public ShopViewModel Shop { get; }
+
+    /// <summary>The app's one "are you sure". Pages stage a deletion here and
+    /// the shell shows a single modal over whichever page raised it.</summary>
+    public ConfirmDeleteViewModel ConfirmDelete { get; } = new();
 
     /// <summary>Read live by the window's close handler.</summary>
     public bool CloseToTray => _state.CloseToTray;
@@ -247,9 +252,9 @@ public partial class MainWindowViewModel : ViewModelBase
         Shop = new ShopViewModel(_state, Save, Wallet);
         Today = new TodayViewModel(_state, Save, () => IsZenMode = !IsZenMode, settings, Wallet,
                                    new SoundService(), new NotificationService());
-        Timetable = new TimetableViewModel(_state, Save);
-        Todo = new TodoViewModel(_state, Save, SendTodoToToday);
-        Subjects = new SubjectsViewModel(_state, Save, OpenUrl);
+        Timetable = new TimetableViewModel(_state, Save, ConfirmDelete);
+        Todo = new TodoViewModel(_state, Save, SendTodoToToday, ConfirmDelete);
+        Subjects = new SubjectsViewModel(_state, Save, OpenUrl, ConfirmDelete);
         var appDataDir = System.IO.Path.GetDirectoryName(storage.Location) ?? ".";
         _reviewLog = new ReviewLogService(appDataDir);
         Stats = new StatsViewModel(_state, _reviewLog);
@@ -260,7 +265,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // Everything that edits a deck or a card originates on the review page,
         // so it gets a save that marks decks dirty; every other page's save
         // leaves decks.json alone.
-        Review = new ReviewViewModel(_state, SaveWithDecks, Wallet, _reviewLog, _media);
+        Review = new ReviewViewModel(_state, SaveWithDecks, Wallet, _reviewLog, _media, ConfirmDelete);
         Music = new MusicPlayerViewModel(_state, Save, new MusicService(_mediaPlayback));
         SettingsPage = new SettingsPageViewModel(_state, Save, settings, Music, Subjects,
                                                  storage.Location);

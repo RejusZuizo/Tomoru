@@ -20,6 +20,7 @@ public sealed record DeckColorSwatch(string Hex, IBrush Brush);
 public partial class DeckViewModel : ViewModelBase
 {
     private readonly Action _changed;
+    private readonly ConfirmDeleteViewModel _confirm;
     private readonly MediaStore _media;
     private readonly Action<Note> _openOcclusion;
     public Deck Model { get; }
@@ -50,8 +51,10 @@ public partial class DeckViewModel : ViewModelBase
 
     public bool IsEditingNote => Editor is not null;
 
-    public DeckViewModel(Deck model, Action changed, MediaStore media, Action<Note> openOcclusion)
+    public DeckViewModel(Deck model, Action changed, MediaStore media, Action<Note> openOcclusion,
+                         ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         Model = model;
         _changed = changed;
         _media = media;
@@ -206,6 +209,16 @@ public partial class DeckViewModel : ViewModelBase
     private void DeleteNote(NoteRowViewModel? row)
     {
         if (row is null) return;
+
+        // A note generates its cards, so deleting it takes every card made
+        // from it and each one's review history.
+        _confirm.Ask("削除 · delete note", row.Model.Fields.Count > 0 ? row.Model.Fields[0] : "this note",
+                     ConfirmDeleteViewModel.Detailing(row.Model.Cards.Count, "card", "cards"),
+                     () => Delete(row));
+    }
+
+    private void Delete(NoteRowViewModel row)
+    {
         if (row == _editingRow) CloseEditor();
         RemoveRow(row);
         RefreshCounts();
