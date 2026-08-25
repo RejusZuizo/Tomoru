@@ -47,7 +47,40 @@ public static class PaletteMatcher
                            EditDistance(q, w, maxEdits) <= maxEdits))
             return 20;
 
+        // A swapped pair is worth forgiving even on a short query, where a
+        // general edit isn't. "rde" should still find red; "st" still must not
+        // find at — and it doesn't, because that's a substitution, not a swap.
+        // Fingers transpose far more often than they substitute.
+        if (q.Length >= 3 && words.Any(w => IsAdjacentSwap(q, w)))
+            return 20;
+
         return null;
+    }
+
+    /// <summary>Is <paramref name="q"/> exactly <paramref name="w"/> with one
+    /// adjacent pair swapped? Same length, two differences, side by side, and
+    /// each other's characters.</summary>
+    private static bool IsAdjacentSwap(string q, string w)
+    {
+        if (q.Length != w.Length)
+            return false;
+
+        var first = -1;
+        var second = -1;
+
+        for (var i = 0; i < q.Length; i++)
+        {
+            if (q[i] == w[i])
+                continue;
+
+            if (first < 0) first = i;
+            else if (second < 0) second = i;
+            else return false;      // three differences is not a swap
+        }
+
+        return second == first + 1
+            && q[first] == w[second]
+            && q[second] == w[first];
     }
 
     /// <summary>Do the query's characters appear in order inside the
