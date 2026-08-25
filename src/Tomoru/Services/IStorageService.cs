@@ -1,0 +1,16 @@
+using Tomoru.Models;
+
+namespace Tomoru.Services;
+
+/// <summary>
+/// Reads and writes the whole app state. Kept as an interface so the rest of
+/// the app depends on the contract, not the JSON-on-disk implementation.
+/// </summary>
+public interface IStorageService
+{
+    AppState Load();
+    void Save(AppState state);
+
+    /// <summary>Where the state lives on disk — surfaced on the settings page.</summary>
+    string Location { get; }
+}

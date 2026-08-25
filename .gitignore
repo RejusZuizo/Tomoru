@@ -21,10 +21,15 @@ _ReSharper*/
 .DS_Store
 Thumbs.db
 
-# local app data (tomoshibi writes its json to the OS app-data folder, not the repo,
+# local app data (tomoru writes its json to the OS app-data folder, not the repo,
 # but ignore any stray copies dropped in the working tree)
-*.tomoshibi.json
+*.tomoru.json
 # Running the app from the repo without XDG_CONFIG_HOME set drops a whole
 # profile directory here — state, decks and crash logs. The pattern above only
 # catches loose json files, not the folder they usually arrive in.
+/Tomoru/
+# The old name's folder is still out there — on this machine, and on anyone's
+# who ran a build from before the rename. The ignore rule got renamed along
+# with everything else, which un-protected it, and a profile and two crash
+# logs went into a commit before that was noticed. Both names stay ignored.
 /Tomoshibi/

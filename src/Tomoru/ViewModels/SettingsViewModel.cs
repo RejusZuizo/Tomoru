@@ -1,0 +1,93 @@
+using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Tomoru.Models;
+
+namespace Tomoru.ViewModels;
+
+/// <summary>
+/// Editable timer lengths. Bound to NumericUpDowns (hence decimal), it writes
+/// straight through to the shared <see cref="PomodoroSettings"/> and notifies
+/// the rest of the app so changes save and the timer can refresh.
+/// </summary>
+public partial class SettingsViewModel : ViewModelBase
+{
+    private readonly PomodoroSettings _settings;
+    private readonly Action _onChanged;
+
+    [ObservableProperty]
+    private decimal _focusMinutes;
+
+    [ObservableProperty]
+    private decimal _shortBreakMinutes;
+
+    [ObservableProperty]
+    private decimal _longBreakMinutes;
+
+    [ObservableProperty]
+    private decimal _roundsBeforeLongBreak;
+
+    [ObservableProperty]
+    private bool _autoContinue;
+
+    [ObservableProperty]
+    private bool _chimeEnabled;
+
+    [ObservableProperty]
+    private bool _notificationsEnabled;
+
+    public SettingsViewModel(PomodoroSettings settings, Action onChanged)
+    {
+        _settings = settings;
+        _onChanged = onChanged;
+
+        _focusMinutes = settings.FocusMinutes;
+        _shortBreakMinutes = settings.ShortBreakMinutes;
+        _longBreakMinutes = settings.LongBreakMinutes;
+        _roundsBeforeLongBreak = settings.RoundsBeforeLongBreak;
+        _autoContinue = settings.AutoContinue;
+        _chimeEnabled = settings.ChimeEnabled;
+        _notificationsEnabled = settings.NotificationsEnabled;
+    }
+
+    partial void OnFocusMinutesChanged(decimal value)
+    {
+        _settings.FocusMinutes = (int)value;
+        _onChanged();
+    }
+
+    partial void OnShortBreakMinutesChanged(decimal value)
+    {
+        _settings.ShortBreakMinutes = (int)value;
+        _onChanged();
+    }
+
+    partial void OnLongBreakMinutesChanged(decimal value)
+    {
+        _settings.LongBreakMinutes = (int)value;
+        _onChanged();
+    }
+
+    partial void OnRoundsBeforeLongBreakChanged(decimal value)
+    {
+        _settings.RoundsBeforeLongBreak = (int)value;
+        _onChanged();
+    }
+
+    partial void OnAutoContinueChanged(bool value)
+    {
+        _settings.AutoContinue = value;
+        _onChanged();
+    }
+
+    partial void OnChimeEnabledChanged(bool value)
+    {
+        _settings.ChimeEnabled = value;
+        _onChanged();
+    }
+
+    partial void OnNotificationsEnabledChanged(bool value)
+    {
+        _settings.NotificationsEnabled = value;
+        _onChanged();
+    }
+}

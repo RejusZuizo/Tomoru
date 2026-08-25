@@ -1,11 +1,11 @@
-# tomoshibi 灯火
+# tomoru 灯る
 
-[![ci](https://github.com/RejusZuizo/Tomoshibi/actions/workflows/ci.yml/badge.svg)](https://github.com/RejusZuizo/Tomoshibi/actions/workflows/ci.yml)
+[![ci](https://github.com/RejusZuizo/Tomoru/actions/workflows/ci.yml/badge.svg)](https://github.com/RejusZuizo/Tomoru/actions/workflows/ci.yml)
 
 **A calm, late-night study companion for university students.**
 
 Most study tools make you choose: a timer here, flashcards there, a spreadsheet
-for grades, a calendar for deadlines. Tomoshibi is the one window where those
+for grades, a calendar for deadlines. Tomoru is the one window where those
 stop being separate. A Pomodoro timer and a daily intention sit at the centre;
 around them are your class timetable, a coursework backlog, spaced-repetition
 flashcards, weighted grades and a focus journal — gathered on a morning
@@ -15,15 +15,15 @@ finished focus block lands against the right course without you filing it.
 No account. No sync. No telemetry. Everything is one JSON file on your own
 machine, and it works with the wifi off.
 
-> *tomoshibi* (灯火) — a small light or lamp; the bit of light you keep on while
-> you work into the night.
+> *tomoru* (灯る) — for a light to come on. The moment the lamp catches, at the
+> start of a night's work.
 
-![a run through tomoshibi — grades, a subject breakdown, the focus streak and a spaced-repetition review session](docs/screenshots/demo.gif)
+![a run through tomoru — grades, a subject breakdown, the focus streak and a spaced-repetition review session](docs/screenshots/demo.gif)
 
 ## Download & install
 
 Grab the build for your OS from the
-[releases page](https://github.com/RejusZuizo/Tomoshibi/releases/latest), unzip,
+[releases page](https://github.com/RejusZuizo/Tomoru/releases/latest), unzip,
 and run. The builds are self-contained — no .NET install needed.
 
 The builds aren't code-signed (yet), so on first launch your OS will be
@@ -35,7 +35,7 @@ suspicious on your behalf:
 - **Windows** — SmartScreen shows "Windows protected your PC". Click
   **More info** → **Run anyway** once.
 - **Linux** — no warning to click through. Extract the tarball anywhere and
-  run `Tomoshibi`, or drop `tomoshibi.desktop` into
+  run `Tomoru`, or drop `tomoru.desktop` into
   `~/.local/share/applications` (fix its `Exec`/`Icon` paths to wherever you
   extracted) to get it in your app menu.
 
@@ -83,7 +83,7 @@ button showing the interval it buys you. There are cloze deletions, image
 occlusion, note types that generate several cards from one, and a searchable
 card browser. Your existing collection comes across directly — `.apkg` files
 are read as-is, and Anki-compatible text imports and exports work both ways.
-Tomoshibi isn't affiliated with Anki; it reads its files because that's where
+Tomoru isn't affiliated with Anki; it reads its files because that's where
 everyone's decks already are.
 
 **Focus stats** put the history in view: a month calendar tinted by focus,
@@ -123,16 +123,16 @@ Building needs the .NET 10 SDK even though the app targets .NET 8 — see
 ## Building from source
 
 You'll need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
-Tomoshibi still *targets* .NET 8 — the newer SDK is only the build toolchain,
+Tomoru still *targets* .NET 8 — the newer SDK is only the build toolchain,
 because Avalonia 12's source generators need a Roslyn version that older SDKs
 don't carry. `global.json` enforces this, so a too-old SDK says so plainly
 instead of failing later with a few hundred missing-symbol errors.
 
 ```bash
-git clone https://github.com/RejusZuizo/Tomoshibi.git tomoshibi
-cd tomoshibi
+git clone https://github.com/RejusZuizo/Tomoru.git tomoru
+cd tomoru
 dotnet restore
-dotnet run --project src/Tomoshibi
+dotnet run --project src/Tomoru
 ```
 
 Run the tests with:
@@ -162,22 +162,22 @@ pwsh scripts/pack-win.ps1
 
 ## Where your data lives
 
-A single `tomoshibi.json` file in your OS application-data folder:
+A single `tomoru.json` file in your OS application-data folder:
 
-- Windows — `%APPDATA%\Tomoshibi\`
-- macOS — `~/Library/Application Support/Tomoshibi/`
-- Linux — `~/.config/Tomoshibi/`
+- Windows — `%APPDATA%\Tomoru\`
+- macOS — `~/Library/Application Support/Tomoru/`
+- Linux — `~/.config/Tomoru/`
 
 Delete it to reset the app to a clean state. When something goes wrong a log
 lands in the same folder — `crash-*.log` if the app went down, `error-*.log` if
 it caught the problem and carried on. Settings → open folder takes you there;
 attaching the newest one to an
-[issue](https://github.com/RejusZuizo/Tomoshibi/issues) makes the bug far easier to
+[issue](https://github.com/RejusZuizo/Tomoru/issues) makes the bug far easier to
 catch. Found a security problem instead? [SECURITY.md](SECURITY.md) has the
 private reporting route.
 
 ## License
 
-Source-available — you're welcome to download, build and run tomoshibi
+Source-available — you're welcome to download, build and run tomoru
 for yourself, but not to redistribute copies or reuse the code elsewhere.
 See [LICENSE](LICENSE). Releases up to v1.9.0 remain MIT.

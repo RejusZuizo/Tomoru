@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to tomoshibi. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+Notable changes to tomoru. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
@@ -10,6 +10,26 @@ v1.8, and the roadmap is the honest account of that stretch.
 ## [Unreleased]
 
 ### Changed
+
+- **Renamed from Tomoshibi to Tomoru.** 灯る — for a light to come on; the verb
+  to 灯火's noun, so the idea behind the name survives even though the word
+  doesn't.
+
+  The reason is prosaic: another study and Pomodoro app already goes by
+  Tomoshibi. A shared name only really costs you when it's the same kind of
+  thing, because then it's the same people searching — and this was.
+
+  Done now rather than later because the whole cost of a rename is migrating
+  the people already using it, and nobody was. That number only goes up, so
+  this was the cheapest it would ever be.
+
+  Your data comes with you. The folder and the state file were both named
+  after the app, so both moved; on first launch the old profile is copied
+  across — copied, not moved, so the original stays where it is. Nothing is
+  written over an install that already has state of its own.
+
+  The five releases before this one keep the old name. Tags can't be rewritten,
+  only superseded.
 
 - **Avalonia 12.** The app builds and runs on 12.1.1. Building now needs the
   .NET 10 SDK — the targets stay `net8.0`; only the toolchain moves, because
@@ -67,7 +87,7 @@ v1.8, and the roadmap is the honest account of that stretch.
 ### Changed
 
 - Flashcard decks live in their own `decks.json` instead of inside
-  `tomoshibi.json`. The main file is rewritten in full on every debounced save,
+  `tomoru.json`. The main file is rewritten in full on every debounced save,
   and an imported Anki collection is megabytes — 5MB for a 6,000-note deck,
   17MB for a large shared one — so ticking a subtask was rewriting the whole
   collection. Decks are now written only when something changes one. Existing

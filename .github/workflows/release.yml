@@ -54,7 +54,7 @@ jobs:
       # The same suite the ci workflow runs — a tag shouldn't be able to
       # produce a download from code that doesn't pass its own tests.
       - name: Test
-        run: dotnet test Tomoshibi.sln --configuration Release
+        run: dotnet test Tomoru.sln --configuration Release
 
       - name: Pack
         shell: bash
