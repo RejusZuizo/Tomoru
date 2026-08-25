@@ -43,6 +43,12 @@ src/Tomoshibi/
   Assets/        app icon (png/ico/icns) + the phase chime
   App.axaml      app entry, theme + resource wiring
   ViewLocator    maps a view model to its view by naming convention
+
+tests/Tomoshibi.Tests/     xUnit tests over the pure logic (see Testing
+                           approach, below)
+scripts/                   packaging scripts per platform
+docs/                      roadmap, architecture, screenshots
+.github/workflows/ci.yml   build + test on every push/PR, across win/mac/linux
 ```
 
 ## Navigation
