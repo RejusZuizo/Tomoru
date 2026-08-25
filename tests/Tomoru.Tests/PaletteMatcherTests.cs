@@ -78,4 +78,59 @@ public class PaletteMatcherTests
             PaletteMatcher.Score("MATH", "math201 problem set"),
             PaletteMatcher.Score("math", "MATH201 PROBLEM SET"));
     }
+
+    // ---- swapped letters ----
+
+    [Theory]
+    [InlineData("rde", "red")]
+    [InlineData("tset", "test")]
+    [InlineData("kanij", "kanji")]
+    public void A_swapped_pair_still_finds_the_word(string typo, string word)
+    {
+        // Transposition is the typo fingers actually make, and it used to be
+        // forgiven only from four characters up — so "rde" found nothing at
+        // all, which is the shortest possible way for search to look broken.
+        Assert.NotNull(PaletteMatcher.Score(typo, word));
+    }
+
+    [Fact]
+    public void A_swap_still_ranks_below_a_real_match()
+    {
+        // It's a rescue, not a preference: anything that genuinely contains the
+        // query should still sort above it.
+        var swapped = PaletteMatcher.Score("rde", "red");
+        var real = PaletteMatcher.Score("red", "red");
+
+        Assert.NotNull(swapped);
+        Assert.True(real > swapped);
+    }
+
+    [Fact]
+    public void A_substitution_on_a_short_query_is_still_refused()
+    {
+        // The reason short queries were excluded in the first place, and it
+        // still holds — "st" and "at" differ by a substitution, not a swap.
+        Assert.Null(PaletteMatcher.Score("st", "at"));
+    }
+
+    [Theory]
+    [InlineData("abc", "acb")]   // swap at the end
+    [InlineData("abc", "bac")]   // swap at the start
+    public void The_swap_can_sit_anywhere_in_the_word(string q, string candidate)
+    {
+        Assert.NotNull(PaletteMatcher.Score(q, candidate));
+    }
+
+    [Fact]
+    public void Two_separate_swaps_are_a_different_word()
+    {
+        // "badc" is "abcd" with two swaps. One typo is a slip; two is a guess.
+        Assert.Null(PaletteMatcher.Score("badc", "abcd"));
+    }
+
+    [Fact]
+    public void A_swap_needs_the_same_letters_not_just_the_same_shape()
+    {
+        Assert.Null(PaletteMatcher.Score("rdx", "red"));
+    }
 }

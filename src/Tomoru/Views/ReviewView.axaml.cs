@@ -18,6 +18,20 @@ public partial class ReviewView : UserControl
 
     private ReviewViewModel? Vm => DataContext as ReviewViewModel;
 
+    /// <summary>Click a deck's name to open it. The card was already covered in
+    /// buttons — review, edit, options, delete — so the name being the one part
+    /// that did nothing read as the card being unclickable rather than as the
+    /// buttons being the way in. Same gesture as clicking a class on the
+    /// timetable; the buttons consume their own presses, so they still win.</summary>
+    private void OnDeckPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (sender is Control { DataContext: DeckViewModel deck } && Vm is { } vm)
+        {
+            vm.OpenDeckCommand.Execute(deck);
+            e.Handled = true;
+        }
+    }
+
     /// <summary>Export the current deck's notes to a CSV file.</summary>
     private async void OnExportCsv(object? sender, RoutedEventArgs e)
         => await Guarded.RunAsync("export the deck to CSV", async () =>
