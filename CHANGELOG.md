@@ -7,6 +7,44 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
+## [Unreleased]
+
+### Changed
+
+- **Avalonia 12.** The app builds and runs on 12.1.1. Building now needs the
+  .NET 10 SDK — the targets stay `net8.0`; only the toolchain moves, because
+  Avalonia 12's source generators need a Roslyn version older SDKs don't carry.
+  `global.json` enforces it so a too-old SDK says so plainly.
+
+### Fixed
+
+- **The ComboBox dropdown was never themed.** Fluent sets that panel's colours
+  on the element itself, which outranks a style setter, so every open dropdown
+  had been painting Fluent's grey rather than the theme's surface — on every
+  theme, since the styles were written. Not an Avalonia 12 regression; it looked
+  right in screenshots because only the closed control was ever photographed.
+- **The update check said "up to date" when it simply couldn't ask.** A DNS
+  failure, a timeout and a rate limit all arrived as the same silent nothing,
+  which the settings page renders as being current. Offline now says so.
+- **Clashing classes hid each other on the week grid.** Two classes at the same
+  hour drew in the same place, so whichever sorted later covered the other —
+  no error, just a timetable missing a class. They take a lane each now.
+- Overlapping-but-not-clashing classes keep their full width, and a lane frees
+  up once its class has finished, so one double-booked morning no longer
+  narrows the whole day.
+- A flaky test that failed about one run in eight, caused by a view-model
+  constructor writing app-wide grade-scale state as a side effect.
+- The legacy `deadlines` key is no longer written to every save. It had been
+  serialising as an empty array in every file since deadlines became tickets.
+
+### Security
+
+- **Every destructive delete asks first.** Ten paths — deck, note, selected
+  cards, bulk tag removal, assessment (both routes), subject, ticket, class and
+  deadline. Only the subjects page confirmed before; deleting a deck took the
+  deck, its notes, every card and every card's scheduling history on a single
+  click, with no undo. Each prompt names what goes with the thing.
+
 ## [2.2.3] - 2026-08-19
 
 ### Security
