@@ -1,6 +1,6 @@
 # tomoshibi 灯火
 
-[![ci](https://github.com/socom1/Tomoshibi/actions/workflows/ci.yml/badge.svg)](https://github.com/socom1/Tomoshibi/actions/workflows/ci.yml)
+[![ci](https://github.com/RejusZuizo/Tomoshibi/actions/workflows/ci.yml/badge.svg)](https://github.com/RejusZuizo/Tomoshibi/actions/workflows/ci.yml)
 
 **A calm, late-night study companion for university students.**
 
@@ -23,7 +23,7 @@ machine, and it works with the wifi off.
 ## Download & install
 
 Grab the build for your OS from the
-[releases page](https://github.com/socom1/Tomoshibi/releases/latest), unzip,
+[releases page](https://github.com/RejusZuizo/Tomoshibi/releases/latest), unzip,
 and run. The builds are self-contained — no .NET install needed.
 
 The builds aren't code-signed (yet), so on first launch your OS will be
@@ -129,7 +129,7 @@ don't carry. `global.json` enforces this, so a too-old SDK says so plainly
 instead of failing later with a few hundred missing-symbol errors.
 
 ```bash
-git clone https://github.com/socom1/Tomoshibi.git tomoshibi
+git clone https://github.com/RejusZuizo/Tomoshibi.git tomoshibi
 cd tomoshibi
 dotnet restore
 dotnet run --project src/Tomoshibi
@@ -172,7 +172,7 @@ Delete it to reset the app to a clean state. When something goes wrong a log
 lands in the same folder — `crash-*.log` if the app went down, `error-*.log` if
 it caught the problem and carried on. Settings → open folder takes you there;
 attaching the newest one to an
-[issue](https://github.com/socom1/Tomoshibi/issues) makes the bug far easier to
+[issue](https://github.com/RejusZuizo/Tomoshibi/issues) makes the bug far easier to
 catch. Found a security problem instead? [SECURITY.md](SECURITY.md) has the
 private reporting route.
 
