@@ -121,6 +121,7 @@ public partial class TimetableViewModel : ViewModelBase
     }
     [ObservableProperty] private string _newSlotTitle = string.Empty;
     [ObservableProperty] private string _newSlotCourse = string.Empty;
+    [ObservableProperty] private string _newSlotNote = string.Empty;
     [ObservableProperty] private string _slotFormLabel = "add";
     [ObservableProperty] private string _slotModalTitle = "新しい授業 · new class";
     [ObservableProperty] private bool _isSlotModalOpen;
@@ -375,6 +376,7 @@ public partial class TimetableViewModel : ViewModelBase
         ClearSlotError();
 
         var course = string.IsNullOrWhiteSpace(NewSlotCourse) ? null : NewSlotCourse.Trim();
+        var note = string.IsNullOrWhiteSpace(NewSlotNote) ? null : NewSlotNote.Trim();
 
         if (_editingSlot is { } editing)
         {
@@ -383,6 +385,7 @@ public partial class TimetableViewModel : ViewModelBase
             editing.End = TimeOnly.FromTimeSpan(NewSlotEnd);
             editing.Title = title;
             editing.Course = course;
+            editing.Note = note;
 
             var row = Slots.FirstOrDefault(r => r.Model == editing);
             if (row is not null)
@@ -397,7 +400,8 @@ public partial class TimetableViewModel : ViewModelBase
                 Start = TimeOnly.FromTimeSpan(NewSlotStart),
                 End = TimeOnly.FromTimeSpan(NewSlotEnd),
                 Title = title,
-                Course = course
+                Course = course,
+                Note = note
             };
 
             _state.ClassSlots.Add(model);
@@ -426,6 +430,7 @@ public partial class TimetableViewModel : ViewModelBase
         NewSlotEnd = item.Model.End.ToTimeSpan();
         NewSlotTitle = item.Model.Title;
         NewSlotCourse = item.Model.Course ?? string.Empty;
+        NewSlotNote = item.Model.Note ?? string.Empty;
         SlotFormLabel = "save";
         SlotModalTitle = "編集 · edit class";
         IsSlotModalOpen = true;
@@ -488,6 +493,7 @@ public partial class TimetableViewModel : ViewModelBase
         ClearSlotError();
         NewSlotTitle = string.Empty;
         NewSlotCourse = string.Empty;
+        NewSlotNote = string.Empty;
         NewDeadlineTitle = string.Empty;
         NewDeadlineCourse = string.Empty;
     }

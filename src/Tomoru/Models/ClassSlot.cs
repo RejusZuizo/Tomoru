@@ -13,4 +13,9 @@ public class ClassSlot
     public TimeOnly End { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Course { get; set; }
+
+    /// <summary>Whatever the title doesn't say — a room, a lecturer, "bring the
+    /// problem sheet". Null when there's nothing to add, so it stays out of the
+    /// saved file for the classes that don't need one.</summary>
+    public string? Note { get; set; }
 }

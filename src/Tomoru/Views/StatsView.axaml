@@ -26,7 +26,10 @@
         <Border Grid.Row="1" Classes="card">
             <StackPanel Spacing="16">
                 <TextBlock Text="// 累計 · all-time" Classes="jp" />
-                <Grid ColumnDefinitions="*,*,*,*">
+                <!-- Four equal columns with no gutter: at 26px, a four-figure
+                     session count runs straight into the next number and the
+                     row reads as one long string rather than four figures. -->
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="20">
                     <StackPanel Grid.Column="0" Spacing="2">
                         <TextBlock Text="{Binding BestStreak}" FontSize="26"
                                    Foreground="{DynamicResource MatchaBrush}" />

@@ -44,6 +44,16 @@ public class ClassSlotItemViewModel : ViewModelBase
     public string? Course => Model.Course;
     public bool HasCourse => !string.IsNullOrWhiteSpace(Model.Course);
 
+    public string? Note => Model.Note;
+    public bool HasNote => !string.IsNullOrWhiteSpace(Model.Note);
+
+    /// <summary>What the week-grid block says on hover. A block is a couple of
+    /// lines of text in a coloured rectangle — there's no room for a note in
+    /// it, and a class with a room number is exactly the one you want to check
+    /// without opening the form. Falls back to the hint when there's nothing
+    /// to say.</summary>
+    public string GridTip => HasNote ? Model.Note! : "click to edit";
+
     /// <summary>0..6, Mon..Sun. Used as the grid column for slot placement.</summary>
     public int DayIndex => (int)Model.Day;
 

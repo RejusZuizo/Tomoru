@@ -547,6 +547,10 @@
                                  Text="{Binding NewSlotCourse}"
                                  ItemsSource="{Binding KnownCourses}"
                                  FilterMode="Contains" />
+                <TextBox PlaceholderText="room, lecturer, what to bring… (optional)"
+                         Text="{Binding NewSlotNote}"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         MinHeight="56" MaxHeight="110" />
 
                 <TextBlock Classes="formerror" Text="{Binding SlotError}"
                            IsVisible="{Binding HasSlotError}" />

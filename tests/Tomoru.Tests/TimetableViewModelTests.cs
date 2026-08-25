@@ -216,4 +216,63 @@ public class TimetableViewModelTests
         Assert.All(vm.Slots, s => Assert.InRange(s.LaneColumn, 0, 9));
         Assert.Equal(4, vm.Slots.Select(s => s.LaneColumn).Distinct().Count());
     }
+
+    // ---- class notes ----
+
+    [Fact]
+    public void A_class_can_carry_a_note_and_keeps_it_through_an_edit()
+    {
+        var vm = Vm();
+        vm.NewSlotTitle = "Algorithms";
+        vm.NewSlotNote = "  room 2.14, bring the problem sheet  ";
+        vm.AddSlotCommand.Execute(null);
+
+        var row = Assert.Single(vm.Slots);
+        Assert.Equal("room 2.14, bring the problem sheet", row.Model.Note);
+        Assert.True(row.HasNote);
+
+        // Reopening the form has to show it, or editing anything else wipes it.
+        vm.BeginEditSlot(row);
+        Assert.Equal("room 2.14, bring the problem sheet", vm.NewSlotNote);
+    }
+
+    [Fact]
+    public void A_class_without_one_stays_out_of_the_saved_file()
+    {
+        // Null rather than "", so the key doesn't land in every slot that has
+        // nothing to say.
+        var vm = Vm();
+        vm.NewSlotTitle = "Algorithms";
+        vm.NewSlotNote = "   ";
+        vm.AddSlotCommand.Execute(null);
+
+        var row = Assert.Single(vm.Slots);
+        Assert.Null(row.Model.Note);
+        Assert.False(row.HasNote);
+    }
+
+    [Fact]
+    public void The_block_shows_the_note_on_hover_and_the_hint_otherwise()
+    {
+        // A grid block has room for a title and a course, not a third line —
+        // and a room number is exactly what you want to check without opening
+        // anything.
+        var withNote = Vm(Slot(WeekDay.Mon, "09:00", "10:00"));
+        withNote.Slots[0].Model.Note = "room 2.14";
+        Assert.Equal("room 2.14", withNote.Slots[0].GridTip);
+
+        var without = Vm(Slot(WeekDay.Mon, "09:00", "10:00"));
+        Assert.Equal("click to edit", without.Slots[0].GridTip);
+    }
+
+    [Fact]
+    public void Cancelling_the_form_clears_the_note_too()
+    {
+        var vm = Vm();
+        vm.NewSlotNote = "half-typed";
+
+        vm.CancelEdits();
+
+        Assert.Equal(string.Empty, vm.NewSlotNote);
+    }
 }

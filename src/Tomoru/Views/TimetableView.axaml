@@ -81,9 +81,14 @@
                                                        VerticalAlignment="Center" />
                                             <TextBlock Grid.Column="1" Text="{Binding TimeLabel}"
                                                        VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="2" Text="{Binding Title}"
-                                                       VerticalAlignment="Center" TextWrapping="Wrap"
-                                                       Margin="6,0,0,0" />
+                                            <StackPanel Grid.Column="2" Margin="6,0,0,0"
+                                                        VerticalAlignment="Center" Spacing="1">
+                                                <TextBlock Text="{Binding Title}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Note}" Classes="caption"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding HasNote}" />
+                                            </StackPanel>
                                             <TextBlock Grid.Column="3" Text="{Binding Course}"
                                                        Foreground="{Binding Course, Converter={StaticResource CourseColor}}"
                                                        VerticalAlignment="Center" Margin="10,0,0,0"
@@ -154,7 +159,8 @@
                                     <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*">
                                     <Border Grid.Column="{Binding LaneColumn}"
                                             Grid.ColumnSpan="{Binding LaneSpan}"
-                                            Classes="slot" ToolTip.Tip="click to edit" Cursor="Hand"
+                                            Classes="slot" Cursor="Hand"
+                                            ToolTip.Tip="{Binding GridTip}"
                                             PointerPressed="OnSlotPressed"
                                             Background="{Binding Course, Converter={StaticResource CourseColor}, ConverterParameter=soft}"
                                             BorderBrush="{Binding Course, Converter={StaticResource CourseColor}}">
