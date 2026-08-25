@@ -19,6 +19,7 @@ public partial class TimetableViewModel : ViewModelBase
 {
     private readonly AppState _state;
     private readonly Action _save;
+    private readonly ConfirmDeleteViewModel _confirm;
 
     public ObservableCollection<ClassSlotItemViewModel> Slots { get; } = new();
     public ObservableCollection<DeadlineItemViewModel> Deadlines { get; } = new();
@@ -213,8 +214,9 @@ public partial class TimetableViewModel : ViewModelBase
     /// <summary>The seven weekdays as picker options for the new-slot form.</summary>
     public IReadOnlyList<WeekDay> WeekDays { get; } = Enum.GetValues<WeekDay>();
 
-    public TimetableViewModel(AppState state, Action save)
+    public TimetableViewModel(AppState state, Action save, ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         _state = state;
         _save = save;
         _classesView = _state.ClassesView;
@@ -337,6 +339,15 @@ public partial class TimetableViewModel : ViewModelBase
         if (item is null)
             return;
 
+        // This is a todo ticket seen through the deadlines card, so removing
+        // it here takes it off the backlog too — not just off this list.
+        _confirm.Ask("削除 · delete deadline", item.Model.Title,
+                     "it goes from the backlog as well, and this can't be undone.",
+                     () => DeleteDeadline(item));
+    }
+
+    private void DeleteDeadline(DeadlineItemViewModel item)
+    {
         _state.Todos.Remove(item.Model);
         RefreshDeadlines();
         RebuildKnownCourses();
@@ -487,6 +498,13 @@ public partial class TimetableViewModel : ViewModelBase
         if (item is null)
             return;
 
+        _confirm.Ask("削除 · delete class", item.Model.Title,
+                     "this can't be undone.",
+                     () => DeleteSlot(item));
+    }
+
+    private void DeleteSlot(ClassSlotItemViewModel item)
+    {
         if (item.Model == _editingSlot)
             CancelEdits();
 

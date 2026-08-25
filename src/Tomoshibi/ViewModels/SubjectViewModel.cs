@@ -20,6 +20,7 @@ namespace Tomoshibi.ViewModels;
 public partial class SubjectViewModel : ViewModelBase
 {
     private readonly Action _changed;
+    private readonly ConfirmDeleteViewModel _confirm;
     private readonly Func<GradeScaleKind> _scale;
     private readonly Action<string> _openUrl;
 
@@ -211,8 +212,9 @@ public partial class SubjectViewModel : ViewModelBase
     }
 
     public SubjectViewModel(Subject model, Action changed, Func<GradeScaleKind> scale,
-                            Action<string> openUrl)
+                            Action<string> openUrl, ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         Model = model;
         _changed = changed;
         _scale = scale;
@@ -363,7 +365,21 @@ public partial class SubjectViewModel : ViewModelBase
     [RelayCommand]
     private void DeleteAssessment()
     {
-        if (_editingAssessment is { } row)
+        // The other way to destroy a mark — the delete button inside the edit
+        // modal, rather than the ✕ on the row. Same loss, same question.
+        if (_editingAssessment is not { } editing)
+        {
+            IsAssessmentModalOpen = false;
+            return;
+        }
+
+        _confirm.Ask("削除 · delete assessment", editing.Model.Title,
+                     "its mark goes with it, and this can't be undone.",
+                     () => DeleteEditing(editing));
+    }
+
+    private void DeleteEditing(AssessmentViewModel row)
+    {
         {
             Model.Assessments.Remove(row.Model);
             row.Changed -= OnAssessmentChanged;
@@ -463,6 +479,13 @@ public partial class SubjectViewModel : ViewModelBase
         if (row is null)
             return;
 
+        _confirm.Ask("削除 · delete assessment", row.Model.Title,
+                     "its mark goes with it, and this can't be undone.",
+                     () => Delete(row));
+    }
+
+    private void Delete(AssessmentViewModel row)
+    {
         Model.Assessments.Remove(row.Model);
         row.Changed -= OnAssessmentChanged;
         row.SimChanged -= OnSimChanged;

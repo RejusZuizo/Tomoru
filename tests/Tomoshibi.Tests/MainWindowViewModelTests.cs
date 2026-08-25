@@ -209,6 +209,22 @@ public class MainWindowViewModelTests : IDisposable
     });
 
     [Fact]
+    public void A_pending_deletion_counts_as_a_modal() => Headless.Run(() =>
+    {
+        // Space toggles the timer. With a delete confirmation up, that has to
+        // stop — a stray space while deciding shouldn't reach past the dialog.
+        var vm = Shell(new AppState { ShowWelcome = false });
+        Assert.False(vm.AnyModalOpen);
+
+        vm.ConfirmDelete.Ask("削除 · delete deck", "kanji", "this can't be undone.", () => { });
+
+        Assert.True(vm.AnyModalOpen);
+
+        vm.ConfirmDelete.CancelCommand.Execute(null);
+        Assert.False(vm.AnyModalOpen);
+    });
+
+    [Fact]
     public void The_tour_closes_on_its_last_page_rather_than_running_off_the_end() => Headless.Run(() =>
     {
         var vm = Shell();

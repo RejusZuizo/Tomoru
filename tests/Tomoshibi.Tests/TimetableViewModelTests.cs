@@ -26,7 +26,7 @@ public class TimetableViewModelTests
     {
         var state = new AppState();
         state.ClassSlots.AddRange(slots);
-        return new TimetableViewModel(state, () => { });
+        return new TimetableViewModel(state, () => { }, new ConfirmDeleteViewModel());
     }
 
     [Fact]

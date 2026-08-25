@@ -29,6 +29,7 @@ public partial class ReviewViewModel : ViewModelBase
     private readonly WalletViewModel _wallet;
     private readonly IReviewLogService _log;
     private readonly MediaStore _media;
+    private readonly ConfirmDeleteViewModel _confirm;
 
     public ObservableCollection<DeckViewModel> Decks { get; } = new();
 
@@ -161,8 +162,10 @@ public partial class ReviewViewModel : ViewModelBase
     [ObservableProperty] private string _easyLabel = string.Empty;
 
     public ReviewViewModel(AppState state, Action save, WalletViewModel wallet,
-                           IReviewLogService log, MediaStore media)
+                           IReviewLogService log, MediaStore media,
+                           ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         _state = state;
         _save = save;
         _wallet = wallet;
@@ -170,9 +173,9 @@ public partial class ReviewViewModel : ViewModelBase
         _media = media;
 
         foreach (var deck in _state.Decks)
-            Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion));
+            Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion, _confirm));
 
-        Browser = new CardBrowserViewModel(_state, _save, RebuildDecks, _media);
+        Browser = new CardBrowserViewModel(_state, _save, RebuildDecks, _media, _confirm);
 
         _autoRevealTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _autoRevealTimer.Tick += OnAutoRevealTick;
@@ -186,7 +189,7 @@ public partial class ReviewViewModel : ViewModelBase
     {
         Decks.Clear();
         foreach (var deck in _state.Decks)
-            Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion));
+            Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion, _confirm));
         Refresh();
     }
 
@@ -261,7 +264,7 @@ public partial class ReviewViewModel : ViewModelBase
             Course = string.IsNullOrWhiteSpace(NewDeckCourse) ? null : NewDeckCourse.Trim()
         };
         _state.Decks.Add(deck);
-        Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion));
+        Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion, _confirm));
 
         NewDeckName = string.Empty;
         NewDeckCourse = string.Empty;
@@ -286,6 +289,17 @@ public partial class ReviewViewModel : ViewModelBase
     {
         if (deck is null) return;
 
+        // A deck takes its notes, its cards and every card's scheduling
+        // history with it. For an imported collection that's thousands of
+        // cards and months of reviews, on one click of a small icon.
+        var cards = deck.Model.Notes.Sum(n => n.Cards.Count);
+        _confirm.Ask("削除 · delete deck", deck.Model.Name,
+                     ConfirmDeleteViewModel.Detailing(cards, "card", "cards"),
+                     () => Delete(deck));
+    }
+
+    private void Delete(DeckViewModel deck)
+    {
         if (deck == SelectedDeck)
             SelectedDeck = null;
 
@@ -342,7 +356,7 @@ public partial class ReviewViewModel : ViewModelBase
         deck.Notes.AddRange(notes);
 
         _state.Decks.Add(deck);
-        Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion));
+        Decks.Add(new DeckViewModel(deck, OnDeckChanged, _media, OpenOcclusion, _confirm));
 
         ImportSummary = $"imported {notes.Count} cards into “{deck.Name}”";
         Refresh();

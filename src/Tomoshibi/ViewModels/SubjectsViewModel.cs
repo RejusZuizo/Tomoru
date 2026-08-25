@@ -28,6 +28,7 @@ public partial class SubjectsViewModel : ViewModelBase
     private readonly AppState _state;
     private readonly Action _save;
     private readonly Action<string> _openUrl;
+    private readonly ConfirmDeleteViewModel _confirm;
 
     private Subject? _editing;
 
@@ -145,23 +146,10 @@ public partial class SubjectsViewModel : ViewModelBase
     [ObservableProperty] private decimal? _formTargetHours;
     [ObservableProperty] private string _formDropRules = string.Empty;
 
-    // ---- Delete confirmation ----
-    // Holding the staged row itself (rather than a bare bool) keeps the prompt
-    // and the delete pointed at the same subject even if the list rebuilds
-    // underneath them.
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRemoveConfirmOpen))]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmRemoveCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CancelRemoveCommand))]
-    private SubjectViewModel? _pendingRemoval;
-
-    public bool IsRemoveConfirmOpen => PendingRemoval is not null;
-
-    [ObservableProperty] private string _removeConfirmName = string.Empty;
-    [ObservableProperty] private string _removeConfirmDetail = string.Empty;
-
-    public SubjectsViewModel(AppState state, Action save, Action<string> openUrl)
+    public SubjectsViewModel(AppState state, Action save, Action<string> openUrl,
+                             ConfirmDeleteViewModel confirm)
     {
+        _confirm = confirm;
         _state = state;
         _save = save;
         _openUrl = openUrl;
@@ -401,32 +389,16 @@ public partial class SubjectsViewModel : ViewModelBase
         if (row is null)
             return;
 
-        RemoveConfirmName = row.Model.Name;
-
         // Name what's actually at stake: a subject carrying a term's worth of
         // marks is a very different loss from an empty one just added.
-        var assessments = row.Model.Assessments.Count;
-        RemoveConfirmDetail = assessments switch
-        {
-            0 => "this can't be undone.",
-            1 => "its 1 assessment goes with it, and this can't be undone.",
-            _ => $"its {assessments} assessments go with it, and this can't be undone.",
-        };
-
-        PendingRemoval = row;
+        _confirm.Ask("削除 · delete subject", row.Model.Name,
+                     ConfirmDeleteViewModel.Detailing(
+                         row.Model.Assessments.Count, "assessment", "assessments"),
+                     () => Delete(row));
     }
 
-    [RelayCommand(CanExecute = nameof(HasPendingRemoval))]
-    private void CancelRemove() => PendingRemoval = null;
-
-    [RelayCommand(CanExecute = nameof(HasPendingRemoval))]
-    private void ConfirmRemove()
+    private void Delete(SubjectViewModel row)
     {
-        if (PendingRemoval is not { } row)
-            return;
-
-        PendingRemoval = null;
-
         if (row.Model == _editing)
         {
             _editing = null;
@@ -444,13 +416,11 @@ public partial class SubjectsViewModel : ViewModelBase
         _save();
     }
 
-    private bool HasPendingRemoval() => PendingRemoval is not null;
-
     /// <summary>Build a subject row wired to this page's callbacks — the
     /// change/save hook, the live grade scale, and the browser-open action
     /// the per-subject resources use.</summary>
     private SubjectViewModel NewRow(Subject subject) =>
-        new(subject, OnSubjectChanged, () => _state.GradeScale, _openUrl);
+        new(subject, OnSubjectChanged, () => _state.GradeScale, _openUrl, _confirm);
 
     private void OnSubjectChanged()
     {
