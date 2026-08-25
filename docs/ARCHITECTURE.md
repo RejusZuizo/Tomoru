@@ -145,13 +145,13 @@ before the window shows so there's no flash.
 
 ## Testing approach
 
-232 xUnit tests, all over pure logic: `PomodoroMachine`, the FSRS scheduler and
-review log, the grade engine, `TaskTemplateParser` (parse + the done-toggle
+374 xUnit tests. Most are over pure logic: `PomodoroMachine`, the FSRS scheduler
+and review log, the grade engine, `TaskTemplateParser` (parse + the done-toggle
 source surgery), storage round-trip and crash recovery, the daily-reset/banking
 rules, the load-time migrations, `IcsImporter`, the deck readers and `.apkg`
 import, card generation, cloze and occlusion layout, the search query parser,
-the palette matcher and its frecency ordering, `EmberSeal`, `WeeklyRetrospective`
-and `BackupRestore`.
+the palette matcher and its frecency ordering, `SlotLanes`, `EmberSeal`,
+`WeeklyRetrospective` and `BackupRestore`.
 
 There's a pattern behind that list. Every one of them started life inside a view
 model and was pulled out into a plain state-in/state-out type *so that* it could
@@ -171,13 +171,42 @@ They're covered now, at least where it matters. `TodoViewModel`,
 constructs them directly — no app, no dispatcher, no window — and drives their
 commands. What's asserted is the behaviour that was expensive to check by eye:
 the week grid measuring itself from the timetable, a block landing at its real
-time rather than rounded to the hour, a repeating ticket actually putting its
-follow-up on the list, and the subject delete confirmation staging rather than
-deleting.
+time rather than rounded to the hour, clashing classes taking a lane each
+instead of drawing on top of one another, a repeating ticket actually putting
+its follow-up on the list, and every destructive delete staging a confirmation
+rather than taking the thing.
 
-What's still uncovered is the shell (`MainWindowViewModel`) and the review
-page, both of which reach for `DispatcherTimer` and platform services. Those
-need the seams pulled out first — the same treatment `PomodoroMachine` got.
+The shell (`MainWindowViewModel`) and the review page were the last holdouts,
+and the plan was to pull their `DispatcherTimer` seams out the way
+`PomodoroMachine` got. That turned out to be unnecessary. A headless Avalonia
+session has a real dispatcher, so both construct exactly as they do in the app
+and the wiring under test is the wiring that ships — the shell needs only a
+storage stub whose `Location` is a real directory.
+
+## Testing the theme
+
+There's a second kind of test now, and a specific failure behind it.
+
+`Styles/Controls.axaml` reaches into Fluent's own control templates — about
+fifty `/template/` selectors naming parts like `PART_BorderElement`,
+`NormalRectangle` and `CheckGlyph`. Half those names carry no compatibility
+promise, and a selector that stops matching is not an error or a warning: the
+build stays green, the tests stay green, and the control quietly renders in
+Fluent's default blue. Across an Avalonia major that's the whole risk, and
+nothing could see it.
+
+`ThemeTemplateTests` builds real templates with the real style stack and
+asserts the setters landed. It found a live bug the first time it ran: Fluent
+sets the ComboBox dropdown panel's colours *on the element*, which outranks a
+style setter, so that panel had been painting Fluent's grey rather than the
+app's surface on every theme since the styles were written. The fix is to
+redefine the keys the template looks up — `ThemeService`'s map — rather than
+to write a selector that can't win.
+
+The same tests cover a second failure that no amount of launching the app will
+reveal: a dependency whose compiled XAML was built against the previous
+Avalonia major. That doesn't fail at startup; it throws the first time one of
+its templates is built, which in practice means on navigation.
 
 ## Failing in front of the user
 

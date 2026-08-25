@@ -109,13 +109,16 @@ changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Tech
 
-Avalonia + .NET 8, MVVM with CommunityToolkit.Mvvm. One codebase, published
+Avalonia 12 + .NET 8, MVVM with CommunityToolkit.Mvvm. One codebase, published
 self-contained for Windows, macOS and Linux. The rules that matter — the
 Pomodoro state machine, the FSRS scheduler, the grade engine, the importers —
-are pure types with no UI attached, which is why 232 tests can drive them. The
-project layout and the reasoning behind it are in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); how to report a vulnerability is
-in [SECURITY.md](SECURITY.md).
+are pure types with no UI attached, which is why most of the 374 tests can
+drive them without a window. The project layout and the reasoning behind it are
+in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); how to report a vulnerability
+is in [SECURITY.md](SECURITY.md).
+
+Building needs the .NET 10 SDK even though the app targets .NET 8 — see
+[Building from source](#building-from-source).
 
 ## Building from source
 

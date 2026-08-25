@@ -319,12 +319,12 @@ Deliberately off the list to keep things focused: cloud sync, accounts, mobile,
 multi-profile, and any always-on network features. Tomoshibi is a local-first,
 single-user desktop app.
 
-## v2.3 — Avalonia 12 (building and green; needs a look before it ships)
+## v2.3 — Avalonia 12 (on main; one check away from tagging)
 
-The toolchain blocker is gone. The app builds warning-free on Avalonia 12.1.1,
-all 297 tests pass, and it runs.
+All merged. The app builds warning-free on Avalonia 12.1.1, 374 tests pass
+across win/mac/linux, and it runs.
 
-**Done, on the `avalonia-12` branch:**
+**Done:**
 
 - [x] `Avalonia*` bumped to 12.1.1, and the Dependabot major-version ignore
       removed
@@ -362,7 +362,7 @@ all 297 tests pass, and it runs.
       landed, so a selector that stops matching fails a test instead of quietly
       rendering Fluent blue. Deliberately **not** using
       `Avalonia.Headless.XUnit`: it moved to xunit v3, which collides with the
-      xunit 2.x the other 297 tests use.
+      xunit 2.x the rest of the suite uses.
 
       Worth knowing these were checked against a known-bad tree before being
       trusted: with Material.Icons pinned back to 2.1.10 the icon test
@@ -381,8 +381,30 @@ all 297 tests pass, and it runs.
       covers that its type still loads. What a headless test *can't* cover is
       the native surface actually embedding, so play a card with video in it
       before tagging.
-- [ ] The `Padding` and `Foreground` setters on
-      `NumericUpDown /template/ TextBox#PART_TextBox` are dead and always have
-      been — Fluent sets both via `TemplateBinding` on the element, which
-      outranks a style setter. Renders correctly regardless (the values arrive
-      from NumericUpDown's own properties), so this is tidying, not a bug.
+- [x] The dead `/template/` setters, which turned up something bigger. The
+      `NumericUpDown` `Padding`/`Foreground` pair was the tidying it looked
+      like — Fluent sets both via `TemplateBinding` on the element, which
+      outranks a style setter, and the values arrived from the outer control
+      anyway. The ComboBox's `PopupBorder` block was not: same mechanism, but
+      there the intent went unmet, so **every open dropdown in the app had been
+      painting Fluent's grey instead of the theme's surface, on every theme,
+      since the styles were written**. Not an Avalonia 12 regression — 11.3.20's
+      template is identical. It looked right in screenshots because only the
+      closed control was ever photographed. Fixed by redefining the keys the
+      template looks up, from `ThemeService`'s map, so it re-themes with
+      everything else.
+
+**Also landed alongside it** (each its own PR, all on main):
+
+- [x] The update check tells "offline" from "up to date" — it used to catch
+      everything into one null, and an empty settings page reads as current.
+- [x] `GradeScale`'s bands get a single owner, removing the constructor side
+      effect behind a flake that hit about one run in eight.
+- [x] The legacy `deadlines` key stops being written to every save.
+- [x] Clashing classes take a lane each on the week grid instead of drawing on
+      top of one another.
+- [x] The shell and the review page are tested — no seam extraction needed
+      after all, because the headless session has a real dispatcher.
+- [x] Every destructive delete asks first. Ten paths; only the subjects page
+      had a confirmation before, and deleting a deck — an imported collection
+      and months of scheduling — did not.
