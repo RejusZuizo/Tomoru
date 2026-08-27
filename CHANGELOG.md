@@ -7,7 +7,7 @@ Milestones before v2.0 are recorded in [docs/ROADMAP.md](docs/ROADMAP.md) rather
 than here — the tags and the milestone numbers drifted apart between v1.2 and
 v1.8, and the roadmap is the honest account of that stretch.
 
-## [Unreleased]
+## [2.3.0] - 2026-08-27
 
 ### Changed
 
@@ -30,6 +30,12 @@ v1.8, and the roadmap is the honest account of that stretch.
 
   The five releases before this one keep the old name. Tags can't be rewritten,
   only superseded.
+
+- **Zen mode has clock faces.** The shop sells three beyond the plain readout:
+  the time written in kanji, a ring that drains as the block does, and a candle
+  that burns down and goes out during your break. Every face reads the same
+  four things, so the choice changes how the timer looks and never what it
+  says.
 
 - **Avalonia 12.** The app builds and runs on 12.1.1. Building now needs the
   .NET 10 SDK — the targets stay `net8.0`; only the toolchain moves, because
