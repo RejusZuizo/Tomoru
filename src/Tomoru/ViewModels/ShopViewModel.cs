@@ -22,6 +22,14 @@ public partial class ShopViewModel : ViewModelBase
 
     public ObservableCollection<ShopThemeViewModel> Themes { get; } = new();
 
+    /// <summary>Zen-mode clock faces — the other thing embers buy. Sold the
+    /// same way as themes, and deliberately in the same shop rather than a
+    /// second one.</summary>
+    public ObservableCollection<ShopClockFaceViewModel> ClockFaces { get; } = new();
+
+    /// <summary>Set by the shell so applying a face reaches zen mode.</summary>
+    public Action<string>? FaceApplied { get; set; }
+
     [ObservableProperty] private string _flash = string.Empty;
 
     public ShopViewModel(AppState state, Action save, WalletViewModel wallet)
@@ -32,6 +40,9 @@ public partial class ShopViewModel : ViewModelBase
 
         foreach (var theme in ThemeService.All)
             Themes.Add(new ShopThemeViewModel(theme));
+
+        foreach (var face in Services.ClockFaces.All)
+            ClockFaces.Add(new ShopClockFaceViewModel(face));
 
         Wallet.PropertyChanged += (_, e) =>
         {
@@ -67,6 +78,39 @@ public partial class ShopViewModel : ViewModelBase
         RefreshStates();
     }
 
+    /// <summary>Buy a face if it isn't owned, wear it either way.</summary>
+    [RelayCommand]
+    private void ActivateFace(ShopClockFaceViewModel? row)
+    {
+        if (row is null)
+            return;
+
+        if (row.IsOwned)
+        {
+            WearFace(row.Face.Id);
+            Flash = $"{row.En} applied";
+        }
+        else if (Wallet.TrySpend(row.Face.Price))
+        {
+            _state.OwnedClockFaceIds.Add(row.Face.Id);
+            WearFace(row.Face.Id);
+            Flash = $"unlocked {row.En} — applied";
+        }
+        else
+        {
+            Flash = $"need {row.Face.Price - Wallet.Balance:N0} more 火種 for {row.En}";
+        }
+
+        RefreshStates();
+    }
+
+    private void WearFace(string id)
+    {
+        _state.ActiveClockFaceId = id;
+        FaceApplied?.Invoke(id);
+        _save();
+    }
+
     private void ApplyTheme(string id)
     {
         _state.ActiveThemeId = id;
@@ -80,6 +124,12 @@ public partial class ShopViewModel : ViewModelBase
         {
             var owned = row.Theme.Price == 0 || _state.OwnedThemeIds.Contains(row.Theme.Id);
             row.SetState(owned, _state.ActiveThemeId == row.Theme.Id, Wallet.Balance);
+        }
+
+        foreach (var row in ClockFaces)
+        {
+            var owned = row.Face.Price == 0 || _state.OwnedClockFaceIds.Contains(row.Face.Id);
+            row.SetState(owned, _state.ActiveClockFaceId == row.Face.Id, Wallet.Balance);
         }
     }
 }

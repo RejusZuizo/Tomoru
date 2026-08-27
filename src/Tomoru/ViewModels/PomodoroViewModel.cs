@@ -60,6 +60,12 @@ public partial class PomodoroViewModel : ViewModelBase
     [ObservableProperty]
     private string _roundLabel = "● ○ ○ ○";
 
+    /// <summary>The same countdown in Japanese numerals, for the kanji clock
+    /// face. Kept beside TimeDisplay rather than converted in the view, so the
+    /// face is a choice of layout and never a different reading of the clock.</summary>
+    [ObservableProperty]
+    private string _kanjiTimeDisplay = string.Empty;
+
     /// <summary>0..1 fraction of the current phase still to run. Drains down.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Elapsed))]
@@ -284,6 +290,7 @@ public partial class PomodoroViewModel : ViewModelBase
     {
         var span = TimeSpan.FromSeconds(_machine.RemainingSeconds);
         TimeDisplay = $"{(int)span.TotalMinutes:00}:{span.Seconds:00}";
+        KanjiTimeDisplay = KanjiNumerals.Countdown((int)span.TotalMinutes, span.Seconds);
         Progress = _machine.Progress;
     }
 

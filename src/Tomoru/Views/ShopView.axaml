@@ -77,6 +77,45 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- ============ Clock faces ============ -->
+                <TextBlock Text="// 時計 · zen clock faces" Classes="jp" Margin="0,22,0,0" />
+                <TextBlock Text="what the timer looks like in zen mode" Classes="caption"
+                           Margin="2,0,0,6" />
+
+                <ItemsControl ItemsSource="{Binding ClockFaces}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ShopClockFaceViewModel">
+                            <Border Classes="card" Margin="0,0,0,8" Padding="16,12">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Classes="cjk">
+                                            <Run Text="{Binding Jp}" />
+                                            <Run Text="{Binding En}"
+                                                 Foreground="{DynamicResource MutedTextBrush}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Blurb}" Classes="caption" />
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding PriceLabel}"
+                                               Classes="caption" VerticalAlignment="Center"
+                                               Margin="0,0,12,0"
+                                               IsVisible="{Binding !IsOwned}" />
+                                    <TextBlock Grid.Column="1" Text="✓ owned" Classes="caption"
+                                               Foreground="{DynamicResource MatchaBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,12,0"
+                                               IsVisible="{Binding IsOwned}" />
+
+                                    <Button Grid.Column="2" Classes="seg"
+                                            Content="{Binding ActionLabel}"
+                                            IsEnabled="{Binding !IsActive}"
+                                            Command="{Binding $parent[ItemsControl].((vm:ShopViewModel)DataContext).ActivateFaceCommand}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <TextBlock Text="more to come — icon packs, sounds…" Classes="caption"
                            Margin="2,4,0,0" />
             </StackPanel>

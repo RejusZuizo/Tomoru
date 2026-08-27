@@ -201,6 +201,23 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Read by App at startup to apply the saved theme.</summary>
     public string ActiveThemeId => _state.ActiveThemeId;
 
+    /// <summary>Which zen-mode clock face is worn. The zen layout binds one
+    /// IsVisible per face against these rather than swapping content, so each
+    /// face is plain markup with no template selector in the middle.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDigitalFace))]
+    [NotifyPropertyChangedFor(nameof(IsKanjiFace))]
+    [NotifyPropertyChangedFor(nameof(IsRingFace))]
+    [NotifyPropertyChangedFor(nameof(IsSegmentsFace))]
+    [NotifyPropertyChangedFor(nameof(IsCandleFace))]
+    private string _activeClockFaceId = ClockFaces.DefaultId;
+
+    public bool IsDigitalFace => ActiveClockFaceId == "digital";
+    public bool IsKanjiFace => ActiveClockFaceId == "kanji";
+    public bool IsRingFace => ActiveClockFaceId == "ring";
+    public bool IsSegmentsFace => ActiveClockFaceId == "segments";
+    public bool IsCandleFace => ActiveClockFaceId == "candle";
+
     /// <summary>Whether the app tracks the desktop's light/dark setting.</summary>
     public bool FollowSystemTheme => _state.FollowSystemTheme;
 
@@ -246,10 +263,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _isNavOpen = _state.IsNavOpen;
         _activeDestination = _state.ActiveDestination;
+        _activeClockFaceId = ClockFaces.Find(_state.ActiveClockFaceId).Id;
 
         var settings = new SettingsViewModel(_state.Settings, OnSettingsChanged);
         Wallet = new WalletViewModel(_state, Save);
-        Shop = new ShopViewModel(_state, Save, Wallet);
+        Shop = new ShopViewModel(_state, Save, Wallet) { FaceApplied = id => ActiveClockFaceId = id };
         Today = new TodayViewModel(_state, Save, () => IsZenMode = !IsZenMode, settings, Wallet,
                                    new SoundService(), new NotificationService());
         Timetable = new TimetableViewModel(_state, Save, ConfirmDelete);
