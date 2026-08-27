@@ -109,6 +109,11 @@ public class AppState
     // Currency + cosmetics
     public int Embers { get; set; }
     public string ActiveThemeId { get; set; } = string.Empty;
+
+    /// <summary>Which zen-mode clock face is worn, and which have been bought.
+    /// Same shape as the themes above — the shop sells both the same way.</summary>
+    public string ActiveClockFaceId { get; set; } = string.Empty;
+    public List<string> OwnedClockFaceIds { get; set; } = new();
     public System.Collections.Generic.List<string> OwnedThemeIds { get; set; } = new();
 
     /// <summary>HMAC over the wallet (embers + themes), stamped on every save

@@ -45,7 +45,13 @@ public partial class PomodoroViewModel : ViewModelBase
     private string _spinner = "·";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsFocus))]
     private PomodoroPhase _phase = PomodoroPhase.Focus;
+
+    /// <summary>Focus rather than either kind of break. The candle clock face
+    /// burns while this is true and goes out while it isn't — a lit candle
+    /// through a rest reads as the timer not having noticed.</summary>
+    public bool IsFocus => Phase == PomodoroPhase.Focus;
 
     [ObservableProperty]
     private string _timeDisplay = "25:00";
@@ -59,6 +65,12 @@ public partial class PomodoroViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _roundLabel = "● ○ ○ ○";
+
+    /// <summary>The same countdown in Japanese numerals, for the kanji clock
+    /// face. Kept beside TimeDisplay rather than converted in the view, so the
+    /// face is a choice of layout and never a different reading of the clock.</summary>
+    [ObservableProperty]
+    private string _kanjiTimeDisplay = string.Empty;
 
     /// <summary>0..1 fraction of the current phase still to run. Drains down.</summary>
     [ObservableProperty]
@@ -284,6 +296,7 @@ public partial class PomodoroViewModel : ViewModelBase
     {
         var span = TimeSpan.FromSeconds(_machine.RemainingSeconds);
         TimeDisplay = $"{(int)span.TotalMinutes:00}:{span.Seconds:00}";
+        KanjiTimeDisplay = KanjiNumerals.Countdown((int)span.TotalMinutes, span.Seconds);
         Progress = _machine.Progress;
     }
 

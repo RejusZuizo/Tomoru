@@ -20,6 +20,8 @@
             <conv:RepeatWordConverter x:Key="RepeatWord" />
             <conv:ZoneWidthConverter x:Key="ZoneWidth" />
             <conv:ZoneColumnsConverter x:Key="ZoneColumns" />
+            <conv:SweepConverter x:Key="Sweep" />
+            <conv:FractionConverter x:Key="Fraction" />
         </ResourceDictionary>
     </Application.Resources>
 
