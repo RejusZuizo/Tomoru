@@ -330,10 +330,11 @@ Deliberately off the list to keep things focused: cloud sync, accounts, mobile,
 multi-profile, and any always-on network features. Tomoru is a local-first,
 single-user desktop app.
 
-## v2.3 — Avalonia 12 (on main; one check away from tagging)
+## v2.3 — Avalonia 12, the rename, and zen clock faces (shipped)
 
-All merged. The app builds warning-free on Avalonia 12.1.1, 374 tests pass
-across win/mac/linux, and it runs.
+Shipped. The app builds warning-free on Avalonia 12.1.1, 436 tests pass across
+win/mac/linux, and flashcard video was confirmed working by hand — the one
+thing no headless test could reach, and the last item gating the tag.
 
 **Done:**
 
@@ -383,7 +384,8 @@ across win/mac/linux, and it runs.
 
 **Before this ships:**
 
-- [ ] `LibVLCSharp.Avalonia` has **no Avalonia 12 release** — 3.9.2 asks for
+- [x] Flashcard video checked by hand and working, which closes the one risk a
+      test couldn't. `LibVLCSharp.Avalonia` still has **no Avalonia 12 release** — 3.9.2 asks for
       Avalonia 11.0.4, and even 3.10.1 asks for 11.3.13. Narrower than it
       sounds, though: music goes through `LibVLCSharp.Shared`, which doesn't
       reference Avalonia at all and so isn't exposed to any of this. The only

@@ -106,22 +106,28 @@ public class ClockFaceShopTests
 
 /// <summary>The candle burns during focus and is out during a break. It's the
 /// one face whose whole point is that it behaves differently across the phase
-/// boundary, so the flag driving it is worth pinning.</summary>
+/// boundary, so the flag driving it is worth pinning.
+///
+/// <para>Runs on the Avalonia thread: PomodoroViewModel builds two
+/// DispatcherTimers, and constructing those on a plain xUnit thread while the
+/// headless session is live throws "a different thread owns it" from whichever
+/// test happens to be running beside it.</para></summary>
+[Collection(HeadlessCollection.Name)]
 public class CandlePhaseTests
 {
     private static PomodoroViewModel Timer() =>
         new(() => new PomodoroSettings());
 
     [Fact]
-    public void A_fresh_timer_starts_on_focus_and_the_candle_is_lit()
+    public void A_fresh_timer_starts_on_focus_and_the_candle_is_lit() => Headless.Run(() =>
     {
         Assert.True(Timer().IsFocus);
-    }
+    });
 
     [Theory]
     [InlineData(PomodoroPhase.ShortBreak)]
     [InlineData(PomodoroPhase.LongBreak)]
-    public void Neither_kind_of_break_keeps_it_burning(PomodoroPhase phase)
+    public void Neither_kind_of_break_keeps_it_burning(PomodoroPhase phase) => Headless.Run(() =>
     {
         // A lit candle through a rest reads as the timer not having noticed
         // the phase changed.
@@ -129,10 +135,10 @@ public class CandlePhaseTests
         vm.Phase = phase;
 
         Assert.False(vm.IsFocus);
-    }
+    });
 
     [Fact]
-    public void Coming_back_to_focus_relights_it()
+    public void Coming_back_to_focus_relights_it() => Headless.Run(() =>
     {
         var vm = Timer();
         vm.Phase = PomodoroPhase.ShortBreak;
@@ -141,5 +147,5 @@ public class CandlePhaseTests
         vm.Phase = PomodoroPhase.Focus;
 
         Assert.True(vm.IsFocus);
-    }
+    });
 }
