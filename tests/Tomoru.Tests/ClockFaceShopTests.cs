@@ -98,8 +98,48 @@ public class ClockFaceShopTests
     {
         // A face the shop sells but zen can't draw is a purchase that does
         // nothing — the shop stays trimmed to what's actually implemented.
-        var known = new[] { "digital", "kanji", "ring" };
+        var known = new[] { "digital", "kanji", "ring", "candle" };
 
         Assert.All(ClockFaces.All, f => Assert.Contains(f.Id, known));
+    }
+}
+
+/// <summary>The candle burns during focus and is out during a break. It's the
+/// one face whose whole point is that it behaves differently across the phase
+/// boundary, so the flag driving it is worth pinning.</summary>
+public class CandlePhaseTests
+{
+    private static PomodoroViewModel Timer() =>
+        new(() => new PomodoroSettings());
+
+    [Fact]
+    public void A_fresh_timer_starts_on_focus_and_the_candle_is_lit()
+    {
+        Assert.True(Timer().IsFocus);
+    }
+
+    [Theory]
+    [InlineData(PomodoroPhase.ShortBreak)]
+    [InlineData(PomodoroPhase.LongBreak)]
+    public void Neither_kind_of_break_keeps_it_burning(PomodoroPhase phase)
+    {
+        // A lit candle through a rest reads as the timer not having noticed
+        // the phase changed.
+        var vm = Timer();
+        vm.Phase = phase;
+
+        Assert.False(vm.IsFocus);
+    }
+
+    [Fact]
+    public void Coming_back_to_focus_relights_it()
+    {
+        var vm = Timer();
+        vm.Phase = PomodoroPhase.ShortBreak;
+        Assert.False(vm.IsFocus);
+
+        vm.Phase = PomodoroPhase.Focus;
+
+        Assert.True(vm.IsFocus);
     }
 }

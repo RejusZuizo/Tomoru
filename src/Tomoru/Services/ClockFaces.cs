@@ -35,10 +35,12 @@ public static class ClockFaces
         new ClockFace("ring", "輪", "ring", 200,
             "the block drawn as a single turn"),
 
-        // Segments (one cell per minute) and the candle that burns down are
-        // designed and not built. They stay out of the catalogue rather than
-        // sitting in it greyed out — a shop that sells things it can't deliver
-        // is worse than a short one.
+        new ClockFace("candle", "灯", "candle", 400,
+            "a candle that burns down as the block does"),
+
+        // Segments (one cell per minute) is designed and not built. It stays
+        // out of the catalogue rather than sitting in it greyed out — a shop
+        // that sells something it can't deliver is worse than a short one.
     };
 
     public static ClockFace Find(string? id) =>

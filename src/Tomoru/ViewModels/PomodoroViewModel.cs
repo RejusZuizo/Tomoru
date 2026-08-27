@@ -45,7 +45,13 @@ public partial class PomodoroViewModel : ViewModelBase
     private string _spinner = "·";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsFocus))]
     private PomodoroPhase _phase = PomodoroPhase.Focus;
+
+    /// <summary>Focus rather than either kind of break. The candle clock face
+    /// burns while this is true and goes out while it isn't — a lit candle
+    /// through a rest reads as the timer not having noticed.</summary>
+    public bool IsFocus => Phase == PomodoroPhase.Focus;
 
     [ObservableProperty]
     private string _timeDisplay = "25:00";

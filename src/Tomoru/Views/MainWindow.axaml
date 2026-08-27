@@ -960,6 +960,96 @@
                 </TextBlock.Transitions>
             </TextBlock>
 
+            <!-- candle · 灯. The name of the app, literally: the wax is the
+                 time left, so it stands tall at the start and burns to a stub.
+                 The flame rides the top of the wax and descends with it, which
+                 is the part that makes it read as burning rather than as a bar
+                 that happens to be vertical. Spent wax stays behind it in the
+                 border colour so there's something to measure against. -->
+            <StackPanel HorizontalAlignment="Center" Spacing="14"
+                        IsVisible="{Binding IsCandleFace}">
+                <Panel Height="300" HorizontalAlignment="Center">
+
+                    <!-- what's been burned: the candle's original height, so
+                         there's something for the remaining wax to be short
+                         against. -->
+                    <Border Width="84" Height="240" CornerRadius="8"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource BorderBrush}" Opacity="0.5" />
+
+                    <!-- what's left, with the flame riding the top of it -->
+                    <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center">
+
+                        <Panel Height="56" Width="44" HorizontalAlignment="Center"
+                               IsVisible="{Binding Today.Pomodoro.IsFocus}">
+                            <Path Classes="flame"
+                                  Classes.paused="{Binding Today.Pomodoro.IsPaused}"
+                                  Fill="{DynamicResource AmberBrush}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                  Data="M 15,0 C 4.5,17 0,26 0,33 C 0,41.5 6.7,48 15,48 C 23.3,48 30,41.5 30,33 C 30,26 25.5,17 15,0 Z">
+                                <Path.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Path.RenderTransform>
+                            </Path>
+                            <Path Classes="flamecore"
+                                  Fill="{DynamicResource TextBrush}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                  Margin="0,0,0,7"
+                                  Data="M 7,0 C 2.2,9 0,13.5 0,17.5 C 0,22 3.1,25 7,25 C 10.9,25 14,22 14,17.5 C 14,13.5 11.8,9 7,0 Z">
+                                <Path.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Path.RenderTransform>
+                            </Path>
+                        </Panel>
+
+                        <!-- The flame's space is kept while it's out, or the
+                             whole candle jumps up the screen the moment a
+                             break starts and drops back when focus resumes. -->
+                        <Panel Height="56" Width="44" HorizontalAlignment="Center"
+                               IsVisible="{Binding !Today.Pomodoro.IsFocus}" />
+
+                        <!-- wick — darker once it's been burning -->
+                        <Border Width="2.5" Height="8" HorizontalAlignment="Center"
+                                Background="{DynamicResource InkBrush}" Opacity="0.8" />
+
+                        <!-- the wax. Tinted by the phase rather than painted in
+                             it — at full strength the accent reads as a glow
+                             stick, and a candle wants to look like wax. -->
+                        <Panel>
+                            <Border Width="84" CornerRadius="8"
+                                    Height="{Binding Today.Pomodoro.Progress, Converter={StaticResource Fraction}, ConverterParameter=240}"
+                                    Background="{Binding Today.Pomodoro.Phase, Converter={StaticResource PhaseToBrush}}"
+                                    Opacity="0.42">
+                                <Border.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Height" Duration="0:0:1" />
+                                        <BrushTransition Property="Background" Duration="0:0:0.45" />
+                                    </Transitions>
+                                </Border.Transitions>
+                            </Border>
+                            <!-- the melted lip catches the light and is most of
+                                 what sells this as wax rather than a bar -->
+                            <Border Width="84" Height="10" CornerRadius="8,8,3,3"
+                                    VerticalAlignment="Top"
+                                    Background="{DynamicResource TextBrush}" Opacity="0.16" />
+                        </Panel>
+                    </StackPanel>
+
+                    <!-- holder -->
+                    <Border Width="118" Height="8" CornerRadius="4"
+                            VerticalAlignment="Bottom"
+                            Background="{DynamicResource MutedTextBrush}" Opacity="0.7" />
+                </Panel>
+
+                <!-- A candle shows you roughly how long is left; it still has
+                     to tell you exactly. -->
+                <TextBlock Text="{Binding Today.Pomodoro.TimeDisplay}"
+                           FontSize="34" FontWeight="Light" Classes="timer"
+                           Classes.paused="{Binding Today.Pomodoro.IsPaused}"
+                           Foreground="{DynamicResource TextBrush}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
             <!-- ring · the block as a single turn. Drains rather than fills,
                  for the same reason the bar does: bound to elapsed it starts
                  at zero, and an untouched block reads as a broken grey circle
@@ -986,7 +1076,7 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Panel>
             <ProgressBar Value="{Binding Today.Pomodoro.Progress}" Minimum="0" Maximum="1"
-                         IsVisible="{Binding !IsRingFace}"
+                         IsVisible="{Binding IsDigitalFace}"
                          Width="560" Height="5" MinHeight="0"
                          Foreground="{Binding Today.Pomodoro.Phase, Converter={StaticResource PhaseToBrush}}"
                          Background="{DynamicResource BorderBrush}">

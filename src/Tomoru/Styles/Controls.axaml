@@ -1,6 +1,61 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <!-- ============ Candle clock face ============
+         The flame is the whole difference between this reading as a candle
+         and reading as a sticker of one, so it moves: a slow, uneven breathe
+         on the outer flame and a faster one on the core, at durations that
+         don't divide into each other. Matching periods would tick in unison
+         and look mechanical, which is the exact failure being avoided.
+         Scaling is anchored to the base so the flame stretches upward from
+         the wick rather than floating off it. -->
+    <Style Selector="Path.flame">
+        <Setter Property="RenderTransformOrigin" Value="50%,100%" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.4" />
+            </Transitions>
+        </Setter>
+        <Style.Animations>
+            <Animation Duration="0:0:2.3" IterationCount="INFINITE" Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0" />
+                </KeyFrame>
+                <KeyFrame Cue="38%">
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.12" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="0.94" />
+                </KeyFrame>
+                <KeyFrame Cue="61%">
+                    <Setter Property="ScaleTransform.ScaleY" Value="0.95" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0" />
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <Style Selector="Path.flamecore">
+        <Setter Property="RenderTransformOrigin" Value="50%,100%" />
+        <Style.Animations>
+            <Animation Duration="0:0:1.7" IterationCount="INFINITE" Easing="SineEaseInOut">
+                <KeyFrame Cue="0%"><Setter Property="Opacity" Value="0.9" /></KeyFrame>
+                <KeyFrame Cue="45%"><Setter Property="Opacity" Value="0.6" /></KeyFrame>
+                <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.9" /></KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!-- Paused: the flame settles rather than stopping dead. A frozen flame
+         reads as a broken animation; a still, dimmer one reads as a held
+         breath. -->
+    <Style Selector="Path.flame.paused">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
     <!-- Window background + base font -->
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource InkBrush}" />
