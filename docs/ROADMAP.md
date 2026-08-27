@@ -296,7 +296,7 @@ section below.
 
 ## Testing
 
-232 tests, all passing. The pure logic is covered: the grade engine, the
+406 tests, all passing. The pure logic is covered: the grade engine, the
 task-template parser (including the done-toggle source surgery), storage
 round-trip + crash recovery, the daily-reset/banking rules, the load-time
 migrations, the `.ics` importer, the ember seal, the palette matcher and its
@@ -309,9 +309,20 @@ phase logic moved out of `PomodoroViewModel` into a clock-free
 `PomodoroMachine`, where time arrives only through `Tick()`, and 16 tests now
 drive whole study afternoons in a loop.
 
-What's still uncovered is the view models themselves, which is why a change
-like the grade-scale extraction has to be verified by hand. Worth a look if
-anything there starts changing often.
+The view models are covered now too, including the two that were the awkward
+ones. `MainWindowViewModel` and the review page both hold a `DispatcherTimer`,
+so the plan was to pull those seams out first — but a headless Avalonia session
+has a real dispatcher, so both construct exactly as they do in the app and no
+refactor was needed.
+
+That headless session also bought a second kind of test the project didn't
+have. `Controls.axaml` reaches into Fluent's own control templates through
+about fifty `/template/` selectors, and a selector that stops matching is
+neither an error nor a warning — the build stays green and the control quietly
+renders in Fluent's default blue. `ThemeTemplateTests` builds real templates
+and asserts the setters landed. It found a live bug on its first run: the
+ComboBox dropdown had been painting Fluent's grey rather than the theme's
+surface, on every theme, since the styles were written.
 
 ## Out of scope (for now)
 
