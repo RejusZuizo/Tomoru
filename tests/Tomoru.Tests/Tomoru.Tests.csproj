@@ -30,7 +30,7 @@
          Deliberately not Avalonia.Headless.XUnit: that package moved to
          xunit v3, which collides with the xunit 2.x the other 297 tests use.
          Driving HeadlessUnitTestSession directly costs one helper. -->
-    <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.2" />
   </ItemGroup>
 
   <ItemGroup>
