@@ -169,19 +169,21 @@ Dress the repo for visitors and publish the first real builds.
       Later); frecency, so familiar picks float up; arrows always drive the
       selection; theme switching, music and mark-intention-kept join the
       actions. The build journal is retired
-- [ ] A short demo GIF for the README
+- [x] A short demo GIF for the README
 - [x] Repo description + topics on GitHub
 - [x] Launch-time update check pointing at the releases page
 - [x] Download & install section in the README (Gatekeeper / SmartScreen
       notes for the unsigned builds)
 - [x] Bump ReleaseNotes to 2.0.0
 - [x] Tag v2.0.0
-- [ ] **Publish a GitHub Release with the platform builds** — all three now,
-      since `pack-linux.sh` has been run on a real Arch box and produces a
-      working tarball. Still the one thing standing between the app and its
-      users: tags run through v2.1.2, but the only Release is an unpublished
-      v2.0.0 draft, so `/releases/latest` 404s — which breaks both the README
-      download link and the launch-time update check.
+- [x] **Publish a GitHub Release with the platform builds.** Done, and it was
+      the thing that had stood between the app and its users the longest: for
+      several versions the tags ran ahead while the only Release was an
+      unpublished v2.0.0 draft, so `/releases/latest` 404'd and took the README
+      download link and the launch-time update check down with it. The release
+      workflow builds all three platforms now — including Linux, since
+      `pack-linux.sh` has been run on a real Arch box — and v2.3.0 is published
+      with its assets attached.
 
 ## v2.1 — recall, rebuilt
 
@@ -296,7 +298,7 @@ section below.
 
 ## Testing
 
-406 tests, all passing. The pure logic is covered: the grade engine, the
+472 tests, all passing. The pure logic is covered: the grade engine, the
 task-template parser (including the done-toggle source surgery), storage
 round-trip + crash recovery, the daily-reset/banking rules, the load-time
 migrations, the `.ics` importer, the ember seal, the palette matcher and its
@@ -307,7 +309,8 @@ cloze and occlusion layout, the search query parser, the review log and
 The long-standing gap — the Pomodoro state machine — closed in v2.2: the
 phase logic moved out of `PomodoroViewModel` into a clock-free
 `PomodoroMachine`, where time arrives only through `Tick()`, and 16 tests now
-drive whole study afternoons in a loop.
+drive whole study afternoons in a loop. v2.4 made that clock injectable, which
+is what let a test close the lid on a block and open it again.
 
 The view models are covered now too, including the two that were the awkward
 ones. `MainWindowViewModel` and the review page both hold a `DispatcherTimer`,
@@ -421,3 +424,69 @@ thing no headless test could reach, and the last item gating the tag.
 - [x] Every destructive delete asks first. Ten paths; only the subjects page
       had a confirmation before, and deleting a deck — an imported collection
       and months of scheduling — did not.
+
+## v2.4 — the clock on the wall
+
+Five things the app had got away with because nothing had gone wrong yet, and
+one that had been in plain sight the whole time. All found by reading the code
+rather than by using it, which is the point: none of them announce themselves.
+
+- [x] **The pomodoro counts seconds, not ticks.** It drove the countdown by
+      decrementing once per `DispatcherTimer` tick, and a dispatcher timer
+      doesn't replay the ticks it missed — so a lid closed ten minutes into a
+      block picked the countdown up exactly where it left off, and a 25-minute
+      block quietly ate 35 minutes of the evening. Time enters the machine
+      through an injectable clock now. A gap only ever ends **one** block:
+      sleeping through an afternoon must not bank three focus sessions nobody
+      sat through. The remainder carries between ticks, because a timer firing
+      a shade early every time would otherwise round every gap down to nothing
+      and stop the clock dead — which is how the first version of the fix hung
+      the test suite.
+- [x] **The block on the clock survives a restart.** Saved with an absolute
+      finish line rather than a countdown, so a running block costs no writes
+      at all while it runs and still comes back charged the time the app spent
+      shut. A block whose finish line passed while the app was closed is
+      neither resumed nor credited — nobody sat through it. It always comes
+      back stopped.
+- [x] **A failed save no longer takes the app down.** Every file picker ran
+      through `Guarded`; the save itself never did. A full disk, a file the
+      sync client had open for a moment, app-data on a drive that went away —
+      any of them left a timer tick, went to the dispatcher and ended the
+      process, losing the session that the temp-then-swap write exists to
+      protect. The restore path was the same hole with a worse ending: it
+      stopped saving the old world *before* writing the new one, so a failed
+      restore left the app unable to save anything at all for the rest of the
+      session.
+- [x] **The collection isn't rewritten per card.** Every graded card marked the
+      decks dirty, so the next save rewrote `decks.json` in full — 6.4MB and
+      ~70ms of frozen UI for a 6,000-note import, between one card and the
+      next, to record a few bytes of scheduling. Throttled now, and flushed on
+      leaving the page and on the way out. A throttle rather than a debounce: a
+      debounce restarted by every card would never come due while someone was
+      actually reviewing, which is exactly when there's something to lose.
+- [x] **One copy of the app.** Two processes over one state file isn't a race
+      that produces a muddle, it's the second one's save replacing the first
+      one's day — and with close-to-tray on, launching again is easy to do
+      without realising the app is already there. Decided before Avalonia
+      starts, so a second launch costs nothing and never flashes a window; it
+      asks the first to show itself rather than dying quietly. Only a lock
+      another copy is holding may stop a launch — a folder that can't hold one
+      opens anyway, since this is decided before there's a window to explain
+      itself in.
+- [x] **The review card is sized to what's on it.** It held a fixed 380–620
+      with the prompt pushed to the top edge and the answer to the bottom,
+      which frames a long card and leaves a short one — most of them — as two
+      lines with a void between. It read as deliberate in a screenshot because
+      a screenshot is always of the card someone chose to photograph. Two
+      headless tests measure the real card now, and both were checked against
+      the old markup before being trusted.
+
+**Left out on purpose.** A global `Dispatcher.UnhandledException` backstop.
+The actual hole was the unguarded save, and that's fixed and tested; a
+catch-all that swallows every dispatcher exception masks real bugs and leaves
+the app running in states nobody designed for. `AppDomain.UnhandledException`
+already logs the crash.
+
+**Still open from the 2.x docs pass:** the nine README screenshots and the
+demo GIF all predate the rename and still show 灯火 · tomoshibi in the nav rail
+while the README calls the app tomoru.

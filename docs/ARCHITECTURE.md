@@ -12,13 +12,14 @@ The project follows a conventional layered layout:
 
 ```
 src/Tomoru/
-  Models/        plain data: AppState, DailyStats, ClassSlot, TodoItem,
+  Models/        plain data: AppState, DailyStats, TimerBlock (the pomodoro
+                 block left on the clock), ClassSlot, TodoItem,
                  Subject + Assessment, Deck + Flashcard, DayNote, the enums
                  (Destination, WeekDay, GradeScaleKind, …)
   Services/      side effects + pure helpers behind interfaces:
                  IStorageService (JSON on disk), ISoundService (chime),
                  INotificationService (native alerts), IMusicService,
-                 PomodoroMachine (the timer's rules, no clock attached),
+                 PomodoroMachine (the timer's rules, over an injected clock),
                  TaskTemplateParser (task code grammar), IcsImporter,
                  CsvCards + ApkgImporter (Anki text and .apkg collections),
                  Fsrs + Scheduler (spaced repetition), CardGenerator,
@@ -31,7 +32,8 @@ src/Tomoru/
                  GradeScale, ThemeService, DailyReset (midnight
                  banking rules), StateMigrations (load-time upgrades),
                  BackupRestore (backup files read back in, migrated),
-                 EmberSeal (the wallet's tamper stamp)
+                 EmberSeal (the wallet's tamper stamp),
+                 SingleInstance (one copy of the app over one state file)
   ViewModels/    UI state and behaviour — the MainWindow shell plus one view
                  model per destination (Dashboard / Today / Timetable / Todo /
                  Subjects / Stats / Review / Shop / Settings), the Cmd-K
@@ -127,6 +129,22 @@ place: the save writes a temp file, rotates the previous good copy to `.bak`,
 then swaps the temp in, so a crash mid-write leaves the old file or the backup
 intact rather than a truncated half-state. The data is tiny.
 
+The write itself is guarded, and that matters more than it looks: it happens
+inside a `DispatcherTimer` tick, where an exception has nowhere to go but the
+dispatcher, and out of the dispatcher means the process. A full disk, a file a
+sync client has open for a moment, app-data on a drive that went away — any of
+those would otherwise end the session the atomic write exists to protect. It
+reports through `Notice` and carries on; the next edit schedules another save.
+
+Decks are the exception to "anything meaningful writes the state back". They
+live in their own file, and that file is on a throttle of its own well behind
+the debounce: an imported Anki collection reaches megabytes, and a review
+session touches one every few seconds, so marking it dirty per card meant
+serialising the whole collection between one card and the next to record a
+handful of bytes of scheduling. A throttle rather than a debounce, deliberately
+— a debounce restarted by every card would never come due while someone was
+actually reviewing — with flushes on leaving the page and on the way out.
+
 The today task list is a special case: the persisted form is the *raw template
 text* the user wrote, and `TaskTemplateParser` re-derives the task blocks on
 every edit. Structured edits (the done checkbox, "send to today" from the
@@ -145,7 +163,7 @@ before the window shows so there's no flash.
 
 ## Testing approach
 
-374 xUnit tests. Most are over pure logic: `PomodoroMachine`, the FSRS scheduler
+472 xUnit tests. Most are over pure logic: `PomodoroMachine`, the FSRS scheduler
 and review log, the grade engine, `TaskTemplateParser` (parse + the done-toggle
 source surgery), storage round-trip and crash recovery, the daily-reset/banking
 rules, the load-time migrations, `IcsImporter`, the deck readers and `.apkg`
@@ -157,9 +175,22 @@ There's a pattern behind that list. Every one of them started life inside a view
 model and was pulled out into a plain state-in/state-out type *so that* it could
 be tested. The Pomodoro rules were the last and most stubborn: the phase logic
 was welded to a `DispatcherTimer`, so nothing could drive it. `PomodoroMachine`
-now holds the rules with time entering only through `Tick()`, and the view model
-is left with labels and a timer — which is why a test can run a whole study
-afternoon in a loop.
+now holds the rules with time entering only through `Tick()` and an injectable
+clock, and the view model is left with labels and a timer — which is why a test
+can run a whole study afternoon in a loop, and why one can close the lid
+mid-block and open it again.
+
+That clock is the rules, not a seam for testing. A tick is a request to catch
+up, not a second: it charges the block the time that has really passed since
+the last one, because a `DispatcherTimer` doesn't replay ticks it missed and a
+suspended machine would otherwise resume the countdown exactly where it left
+off. Two rules keep that honest — a gap only ever ends one block, so an
+afternoon asleep can't bank focus nobody sat through; and the sub-second
+remainder carries between ticks, so a timer firing a shade early can't round
+every gap to nothing and stop the clock. The block itself is written to the
+state file with an absolute finish line rather than a countdown, which is what
+lets a quit or a crash mid-focus be picked back up, and means a running clock
+costs no writes at all.
 
 The view models were the long-standing gap, and the cost was visible: UI
 changes had to be verified by screenshot, a timetable-grid change shipped a
@@ -217,7 +248,10 @@ outside its own modals and nowhere else to put an error:
   unavoidably, since that's an event handler's signature — and an exception
   after the first `await` in an `async void` goes to the dispatcher and kills
   the process. Wrapping the body in a task that never faults makes awaiting it
-  safe.
+  safe. `Guarded.Report` is the same two lines — log the detail, show the
+  sentence — for the places that can't be a `RunAsync` body, which in practice
+  means the save: it runs inside a timer tick rather than behind a picker, and
+  it was the one file path in the app that wasn't guarded at all.
 - `Notice` is the one-line banner it surfaces on, a single static instance
   because the app is one window and threading a path to the shell through
   fifteen file handlers isn't worth the wiring.
@@ -227,13 +261,18 @@ outside its own modals and nowhere else to put an error:
 
 ## Known limitations
 
-- Save-on-change rewrites the entire file. Fine at this scale; revisit only if
-  the data grows a lot.
-- The package versions in the csproj are pinned to a known-good set and lag the
-  latest Avalonia release deliberately: Dependabot holds Avalonia at 11.x
-  because 12 is a breaking major, and `Avalonia.Diagnostics` carries its own
-  version property since it has no 12.x at all. The migration is planned in
-  v2.2; the ignore rule comes off on that branch.
+- Save-on-change rewrites the entire file. Fine at this scale for `tomoru.json`;
+  the decks, which are the part that can reach megabytes, are split into their
+  own file and written on a throttle rather than with every save.
+- A paused block is restored however long ago it was left, so quitting at 1am
+  and opening the next evening finds that block still waiting, paused. A
+  staleness cutoff would want an arbitrary constant, and a paused block is a
+  paused block; start or reset clears it.
+- `Material.Icons.Avalonia` has to track the Avalonia major by hand — 2.x is
+  built against 11 and 3.x against 12, and a mismatch surfaces at runtime on
+  navigation rather than failing the build. `ThemeTemplateTests` covers it.
+  `LibVLCSharp.Avalonia` still has no Avalonia 12 release; only `VideoView` is
+  exposed to that, and it carries no compiled XAML.
 - `.ics` import reads times as wall-clock and only maps weekly recurrences;
   exotic RRULEs are counted and skipped.
 - The dashboard's paired cards use a `UniformGrid` to keep their heights level;
