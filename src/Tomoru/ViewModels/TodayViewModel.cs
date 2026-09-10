@@ -171,8 +171,13 @@ public partial class TodayViewModel : ViewModelBase
         Pomodoro = new PomodoroViewModel(ComposeEffectiveSettings, sound, notify);
         Pomodoro.FocusSessionCompleted += OnFocusSessionCompleted;
         Pomodoro.BlockCompleted += OnBlockCompleted;
+        Pomodoro.BlockChanged += OnTimerBlockChanged;
 
         Tasks = new TaskTemplateViewModel(_state, _save, OnActiveTaskChanged);
+
+        // After the tasks, so the block comes back against the same effective
+        // settings it was running under.
+        Pomodoro.RestoreFrom(_state.Timer);
 
         RecomputeStreak();
         RefreshScheduleInfo();
@@ -196,6 +201,16 @@ public partial class TodayViewModel : ViewModelBase
             ChimeEnabled = s.ChimeEnabled,
             NotificationsEnabled = s.NotificationsEnabled
         };
+    }
+
+    /// <summary>The block on the clock started, paused, was skipped, reset, or
+    /// ran out — write it down so the next launch can pick it up. Not called
+    /// per tick: the saved block holds an absolute finish line, so a running
+    /// countdown costs no writes at all while it runs.</summary>
+    private void OnTimerBlockChanged()
+    {
+        _state.Timer = Pomodoro.Snapshot();
+        _save();
     }
 
     /// <summary>When the user picks a different task, the timer needs to

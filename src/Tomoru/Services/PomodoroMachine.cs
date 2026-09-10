@@ -128,6 +128,54 @@ public sealed class PomodoroMachine
         return finished;
     }
 
+    /// <summary>Write the block down so a later launch can pick it up.
+    /// <paramref name="running"/> is the caller's, because whether the clock is
+    /// ticking belongs to the timer, not to the rules.</summary>
+    public TimerBlock Snapshot(bool running) => new()
+    {
+        Phase = Phase,
+        Round = Round,
+        PhaseTotalSeconds = PhaseTotalSeconds,
+        PhaseFocusMinutes = PhaseFocusMinutes,
+        RemainingSeconds = RemainingSeconds,
+        EndsAt = _clock().AddSeconds(RemainingSeconds),
+        WasRunning = running
+    };
+
+    /// <summary>Take up a block written down earlier. True if there was
+    /// something worth resuming; false leaves the machine as it was — a fresh
+    /// phase — and the caller can forget the block.
+    ///
+    /// <para>Always comes back stopped. Resuming a countdown on launch, before
+    /// the user has so much as looked at the window, would be the app deciding
+    /// they were back at work.</para></summary>
+    public bool Restore(TimerBlock? block)
+    {
+        if (block is null || block.PhaseTotalSeconds <= 0)
+            return false;
+
+        // A block that was running kept its finish line, so the time the app
+        // spent shut counts against it; a paused one kept its countdown.
+        var remaining = block.WasRunning
+            ? (int)Math.Floor((block.EndsAt - _clock()).TotalSeconds)
+            : block.RemainingSeconds;
+
+        // Ran out while nobody was there, or was never started. Neither is
+        // something to hand back — and the first must not be credited, since
+        // nobody sat through it.
+        if (remaining <= 0 || remaining >= block.PhaseTotalSeconds)
+            return false;
+
+        Phase = block.Phase;
+        Round = Math.Max(1, block.Round);
+        PhaseTotalSeconds = block.PhaseTotalSeconds;
+        PhaseFocusMinutes = block.PhaseFocusMinutes;
+        RemainingSeconds = remaining;
+        _lastTick = null;
+
+        return true;
+    }
+
     /// <summary>Put the current phase back to full, keeping the round.</summary>
     public void Reset() => RemainingSeconds = PhaseTotalSeconds;
 

@@ -102,6 +102,83 @@ public class MainWindowViewModelTests : IDisposable
         foreach (var s in _failing) s.Dispose();
     }
 
+    // ---- the block that was on the clock ----
+    //
+    // Nothing about the running timer was written down, so quitting or crashing
+    // twenty minutes into a focus block lost it: the next launch opened on a
+    // fresh 25:00 with no sign there had been anything else.
+
+    private static AppState WithBlock(int remainingSeconds, bool running, int endsInSeconds = 0) =>
+        new()
+        {
+            Timer = new TimerBlock
+            {
+                Phase = PomodoroPhase.Focus,
+                Round = 2,
+                PhaseTotalSeconds = 25 * 60,
+                PhaseFocusMinutes = 25,
+                RemainingSeconds = remainingSeconds,
+                EndsAt = DateTime.Now.AddSeconds(endsInSeconds),
+                WasRunning = running
+            }
+        };
+
+    [Fact]
+    public void A_paused_block_is_waiting_where_it_was_left() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(15 * 60, running: false));
+
+        Assert.Equal("15:00", vm.Today.Pomodoro.TimeDisplay);
+        Assert.False(vm.Today.Pomodoro.IsRunning);
+        Assert.True(vm.Today.Pomodoro.IsPaused);
+    });
+
+    [Fact]
+    public void A_running_block_comes_back_minus_the_time_the_app_was_shut() => Headless.Run(() =>
+    {
+        // Written down with twenty minutes left, but its finish line is ten
+        // minutes out — the app was closed for the ten in between.
+        var vm = Shell(WithBlock(20 * 60, running: true, endsInSeconds: 10 * 60));
+
+        var minutes = int.Parse(vm.Today.Pomodoro.TimeDisplay.Split(':')[0]);
+        Assert.InRange(minutes, 9, 10);
+    });
+
+    [Fact]
+    public void A_block_that_ran_out_while_the_app_was_shut_opens_fresh() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(20 * 60, running: true, endsInSeconds: -60));
+
+        Assert.Equal("25:00", vm.Today.Pomodoro.TimeDisplay);
+        Assert.False(vm.Today.Pomodoro.IsPaused);
+    });
+
+    [Fact]
+    public void The_round_survives_the_restart_too() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(15 * 60, running: false));
+
+        // Round 2 of the set — coming back on round 1 would put the long break
+        // in the wrong place for the rest of the afternoon.
+        Assert.Equal("● ● ○ ○", vm.Today.Pomodoro.RoundLabel);
+    });
+
+    [Fact]
+    public void Starting_the_timer_writes_the_block_down() => Headless.Run(() =>
+    {
+        var state = new AppState();
+        var vm = Shell(state);
+
+        vm.Today.Pomodoro.ToggleRunCommand.Execute(null);
+
+        Assert.NotNull(state.Timer);
+        Assert.True(state.Timer!.WasRunning);
+
+        vm.Today.Pomodoro.ToggleRunCommand.Execute(null);
+
+        Assert.False(state.Timer!.WasRunning);
+    });
+
     // ---- the collection is not rewritten per card ----
     //
     // Every graded card used to mark the decks dirty, so the next debounced
