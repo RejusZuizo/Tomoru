@@ -171,6 +171,9 @@ public partial class PomodoroViewModel : ViewModelBase
         }
         else
         {
+            // Take the clock reference before the first tick lands, or the
+            // stretch the timer spent paused is charged to the block.
+            _machine.Resume();
             _timer.Start();
             IsRunning = true;
         }
@@ -247,6 +250,7 @@ public partial class PomodoroViewModel : ViewModelBase
 
         if (s.AutoContinue)
         {
+            _machine.Resume();
             _timer.Start();
             IsRunning = true;
         }

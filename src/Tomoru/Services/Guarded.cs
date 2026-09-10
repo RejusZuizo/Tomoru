@@ -30,9 +30,17 @@ public static class Guarded
         }
         catch (Exception ex)
         {
-            ErrorLog.Handled(action, ex);
-            Notice.Current.Show($"couldn't {action} — {Explain(ex)}");
+            Report(action, ex);
         }
+    }
+
+    /// <summary>Log the detail, tell the user the sentence. Public because the
+    /// save path needs the same two lines but can't be a <see cref="RunAsync"/>
+    /// body — it runs inside a timer tick, not behind a file picker.</summary>
+    public static void Report(string action, Exception ex)
+    {
+        ErrorLog.Handled(action, ex);
+        Notice.Current.Show($"couldn't {action} — {Explain(ex)}");
     }
 
     /// <summary>Turn an exception into something a student can act on. The

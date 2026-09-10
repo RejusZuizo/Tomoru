@@ -757,6 +757,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _state.ActiveDestination = value;
 
+        // Leaving a page is the natural end of whatever was being done on it —
+        // and for the review page that's a session's scheduling waiting on a
+        // throttle. No-op when nothing has changed a deck.
+        FlushDecks();
+
         // Landing on a page re-reads anything other pages may have changed —
         // schedule edits show on today, timer sessions show on tickets.
         switch (value)
@@ -834,9 +839,27 @@ public partial class MainWindowViewModel : ViewModelBase
     /// model rebuilds from the restored file — the same path as any launch.</summary>
     private void RestoreAndRestart(AppState restored)
     {
+        // Write first, and only then stop saving the old world. The other order
+        // leaves a failed restore unable to save anything for the rest of the
+        // session — nothing restored, and every edit after it dropped.
+        try
+        {
+            _storage.Save(restored);
+        }
+        catch (Exception ex)
+        {
+            Guarded.Report("restore that backup", ex);
+            return;
+        }
+
         _suppressSaves = true;
         _saveTimer?.Stop();
-        _storage.Save(restored);
+        _deckTimer?.Stop();
+
+        // Hand the single-instance lock over before spawning the replacement,
+        // or it races this process's shutdown for it — and loses, leaving the
+        // restore with nothing reopened.
+        App.Instance?.Dispose();
 
         if (Environment.ProcessPath is { } exe)
             System.Diagnostics.Process.Start(
@@ -847,9 +870,51 @@ public partial class MainWindowViewModel : ViewModelBase
             desktop.Shutdown();
     }
 
-    /// <summary>Save, and include the decks in it.</summary>
+    // The collection is written on a throttle of its own, well behind the
+    // debounced state save. An imported Anki deck reaches megabytes, and a
+    // review session touches one every few seconds: marking it dirty per card
+    // meant serialising the whole collection between one card and the next,
+    // on the UI thread, to record a handful of bytes of scheduling. This
+    // bounds that to one write per interval however fast the cards go, and
+    // flushes at every edge where the session might be over.
+    private DispatcherTimer? _deckTimer;
+
+    /// <summary>Something has changed a deck since the last collection write.</summary>
+    private bool _decksPending;
+
+    /// <summary>Save, and let the collection ride the throttle. Deliberately a
+    /// throttle rather than a debounce: a debounce restarted by every card
+    /// would never come due while someone was actually reviewing, which is
+    /// exactly when there's something to lose.</summary>
     private void SaveWithDecks()
     {
+        _decksPending = true;
+
+        _deckTimer ??= CreateDeckTimer();
+        if (!_deckTimer.IsEnabled)
+            _deckTimer.Start();
+
+        Save();
+    }
+
+    private DispatcherTimer CreateDeckTimer()
+    {
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+        timer.Tick += (_, _) => FlushDecks();
+        return timer;
+    }
+
+    /// <summary>Let the next save carry the collection, if anything has changed
+    /// one. Called on the throttle, when the user leaves the page, and on the
+    /// way out.</summary>
+    private void FlushDecks()
+    {
+        _deckTimer?.Stop();
+
+        if (!_decksPending)
+            return;
+
+        _decksPending = false;
         _state.DecksDirty = true;
         Save();
     }
@@ -870,9 +935,31 @@ public partial class MainWindowViewModel : ViewModelBase
         timer.Tick += (_, _) =>
         {
             timer.Stop();
-            _storage.Save(_state);
+            WriteState();
         };
         return timer;
+    }
+
+    /// <summary>The one place the state is handed to disk, and the only one
+    /// that may throw.
+    ///
+    /// <para>A write can fail for reasons that have nothing to do with the app:
+    /// a full disk, a file a sync client or a virus scanner has open for a
+    /// moment, app-data on a drive that went away. Unguarded, that exception
+    /// leaves a timer tick, goes to the dispatcher and takes the process with
+    /// it — losing the whole session, which is precisely what the temp-then-swap
+    /// write exists to prevent. So it reports and carries on: the next edit
+    /// schedules another save, and the one after that may well land.</para></summary>
+    private void WriteState()
+    {
+        try
+        {
+            _storage.Save(_state);
+        }
+        catch (Exception ex)
+        {
+            Guarded.Report("save your work", ex);
+        }
     }
 
     /// <summary>Write any pending change right now — called on window close
@@ -885,11 +972,14 @@ public partial class MainWindowViewModel : ViewModelBase
         if (_saveTimer?.IsEnabled == true)
             _saveTimer.Stop();
 
-        // On the way out, write decks unconditionally. The dirty flag is a
-        // performance optimisation, and a missed flag shouldn't be able to
-        // cost someone their review progress.
+        _deckTimer?.Stop();
+        _decksPending = false;
+
+        // On the way out, write decks unconditionally. The dirty flag and the
+        // throttle above it are performance measures, and neither should be
+        // able to cost someone their review progress.
         _state.DecksDirty = true;
-        _storage.Save(_state);
+        WriteState();
     }
 
     /// <summary>Hand the native LibVLC instance and its audio player back on the
