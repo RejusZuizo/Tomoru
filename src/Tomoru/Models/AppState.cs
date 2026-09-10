@@ -33,6 +33,12 @@ public class AppState
 
     public PomodoroSettings Settings { get; set; } = new();
 
+    /// <summary>The block that was on the clock when this was written, so a
+    /// quit or a crash mid-focus doesn't cost it. Null once there's nothing
+    /// part-way through to come back to. See <c>TimerBlock</c>.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public TimerBlock? Timer { get; set; }
+
     /// <summary>Strips the timer down to just the clock + gauge, hiding the
     /// session log and keybind footer for a calmer view.</summary>
     public bool SimpleTimer { get; set; }

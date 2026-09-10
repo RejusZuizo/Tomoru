@@ -39,6 +39,23 @@ public partial class PomodoroViewModel : ViewModelBase
     /// session log feed.</summary>
     public event Action<PomodoroPhase, int>? BlockCompleted;
 
+    /// <summary>Raised when the block on the clock changes shape — started,
+    /// paused, skipped, reset, or run out. Deliberately not on every tick: the
+    /// saved block keeps an absolute finish line, so a running countdown needs
+    /// nothing written while it runs.</summary>
+    public event Action? BlockChanged;
+
+    /// <summary>The block as it stands, for writing to the state file.</summary>
+    public TimerBlock Snapshot() => _machine.Snapshot(IsRunning);
+
+    /// <summary>Take up the block a previous launch left, if there's anything
+    /// in it worth resuming. Comes back stopped either way.</summary>
+    public void RestoreFrom(TimerBlock? block)
+    {
+        if (_machine.Restore(block))
+            SyncFromMachine();
+    }
+
     /// <summary>The current braille spinner frame, cycled while running and a
     /// steady glyph when idle.</summary>
     [ObservableProperty]
@@ -171,11 +188,15 @@ public partial class PomodoroViewModel : ViewModelBase
         }
         else
         {
+            // Take the clock reference before the first tick lands, or the
+            // stretch the timer spent paused is charged to the block.
+            _machine.Resume();
             _timer.Start();
             IsRunning = true;
         }
 
         UpdatePaused();
+        BlockChanged?.Invoke();
     }
 
     [RelayCommand]
@@ -185,6 +206,7 @@ public partial class PomodoroViewModel : ViewModelBase
         IsRunning = false;
         _machine.Reset();
         SyncFromMachine();
+        BlockChanged?.Invoke();
     }
 
     [RelayCommand]
@@ -196,6 +218,7 @@ public partial class PomodoroViewModel : ViewModelBase
         IsRunning = false;
         _machine.Advance();
         SyncFromMachine();
+        BlockChanged?.Invoke();
     }
 
     /// <summary>
@@ -247,11 +270,13 @@ public partial class PomodoroViewModel : ViewModelBase
 
         if (s.AutoContinue)
         {
+            _machine.Resume();
             _timer.Start();
             IsRunning = true;
         }
 
         UpdatePaused();
+        BlockChanged?.Invoke();
     }
 
     /// <summary>Pull the machine's state through to the bindable surface.</summary>

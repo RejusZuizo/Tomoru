@@ -22,12 +22,22 @@ public readonly record struct CompletedBlock(PomodoroPhase Phase, int FocusMinut
 public sealed class PomodoroMachine
 {
     private readonly Func<PomodoroSettings> _settings;
+    private readonly Func<DateTime> _clock;
 
-    public PomodoroMachine(Func<PomodoroSettings> settings)
+    public PomodoroMachine(Func<PomodoroSettings> settings, Func<DateTime>? clock = null)
     {
         _settings = settings;
+        _clock = clock ?? (() => DateTime.Now);
         SetPhase(PomodoroPhase.Focus, resetRound: true);
     }
+
+    /// <summary>When the last tick was seen. Null before the first one, which
+    /// is then worth the nominal second rather than the age of the process.</summary>
+    private DateTime? _lastTick;
+
+    /// <summary>Take the clock reference now — called when the timer starts or
+    /// resumes, so the stretch it spent paused isn't charged to the block.</summary>
+    public void Resume() => _lastTick = _clock();
 
     public PomodoroPhase Phase { get; private set; }
 
@@ -53,13 +63,40 @@ public sealed class PomodoroMachine
     /// "not started yet".</summary>
     public bool IsMidPhase => RemainingSeconds > 0 && RemainingSeconds < PhaseTotalSeconds;
 
-    /// <summary>One second of clock. Returns the block that just ended, or null
-    /// if the phase is still running.</summary>
+    /// <summary>A turn of the clock. Charges the block the time that has really
+    /// passed since the last tick, not a flat second: a tick is only ever a
+    /// request to catch up, and the gap can be much larger than the interval —
+    /// a suspended machine, or a UI thread that was busy elsewhere. Returns the
+    /// block that just ended, or null if the phase is still running.</summary>
     public CompletedBlock? Tick()
     {
-        if (RemainingSeconds > 0)
-            RemainingSeconds--;
+        var now = _clock();
 
+        // No reference yet — ticked without a Resume, so the tick is worth the
+        // nominal second rather than the age of the machine.
+        var last = _lastTick ?? now.AddSeconds(-1);
+
+        // The clock stepped backwards (an NTP correction, or the hour going
+        // back). Take the new reading and charge nothing: holding the old
+        // reference would freeze the block until real time caught up again.
+        if (now < last)
+        {
+            _lastTick = now;
+            return null;
+        }
+
+        // Whole seconds only, with the remainder carried into the next tick —
+        // a timer that fires a shade early every time would otherwise round
+        // every gap down to nothing and stop the clock dead.
+        var elapsed = (int)Math.Floor((now - last).TotalSeconds);
+        _lastTick = last.AddSeconds(elapsed);
+
+        if (RemainingSeconds > 0)
+            RemainingSeconds = Math.Max(0, RemainingSeconds - elapsed);
+
+        // Only ever one block per tick. A lid closed over a whole afternoon
+        // means one focus block ran out while nobody was there — not three of
+        // them banked as time the user sat through.
         return RemainingSeconds <= 0 ? Advance() : null;
     }
 
@@ -89,6 +126,54 @@ public sealed class PomodoroMachine
         }
 
         return finished;
+    }
+
+    /// <summary>Write the block down so a later launch can pick it up.
+    /// <paramref name="running"/> is the caller's, because whether the clock is
+    /// ticking belongs to the timer, not to the rules.</summary>
+    public TimerBlock Snapshot(bool running) => new()
+    {
+        Phase = Phase,
+        Round = Round,
+        PhaseTotalSeconds = PhaseTotalSeconds,
+        PhaseFocusMinutes = PhaseFocusMinutes,
+        RemainingSeconds = RemainingSeconds,
+        EndsAt = _clock().AddSeconds(RemainingSeconds),
+        WasRunning = running
+    };
+
+    /// <summary>Take up a block written down earlier. True if there was
+    /// something worth resuming; false leaves the machine as it was — a fresh
+    /// phase — and the caller can forget the block.
+    ///
+    /// <para>Always comes back stopped. Resuming a countdown on launch, before
+    /// the user has so much as looked at the window, would be the app deciding
+    /// they were back at work.</para></summary>
+    public bool Restore(TimerBlock? block)
+    {
+        if (block is null || block.PhaseTotalSeconds <= 0)
+            return false;
+
+        // A block that was running kept its finish line, so the time the app
+        // spent shut counts against it; a paused one kept its countdown.
+        var remaining = block.WasRunning
+            ? (int)Math.Floor((block.EndsAt - _clock()).TotalSeconds)
+            : block.RemainingSeconds;
+
+        // Ran out while nobody was there, or was never started. Neither is
+        // something to hand back — and the first must not be credited, since
+        // nobody sat through it.
+        if (remaining <= 0 || remaining >= block.PhaseTotalSeconds)
+            return false;
+
+        Phase = block.Phase;
+        Round = Math.Max(1, block.Round);
+        PhaseTotalSeconds = block.PhaseTotalSeconds;
+        PhaseFocusMinutes = block.PhaseFocusMinutes;
+        RemainingSeconds = remaining;
+        _lastTick = null;
+
+        return true;
     }
 
     /// <summary>Put the current phase back to full, keeping the round.</summary>

@@ -1,3 +1,4 @@
+using System;
 using Tomoru.Models;
 using Tomoru.Services;
 using Xunit;
@@ -9,6 +10,32 @@ namespace Tomoru.Tests;
 /// Now a whole study afternoon runs in a loop.</summary>
 public class PomodoroMachineTests
 {
+    /// <summary>A clock the test moves by hand. Every read advances a second by
+    /// default, so a tick loop reads exactly like the one-second timer the app
+    /// runs — but a test can also jump it forward to stand in for a lid closed
+    /// mid-block.</summary>
+    private sealed class FakeClock
+    {
+        private DateTime _now = new(2025, 3, 1, 9, 0, 0);
+
+        /// <summary>How much time a read lets pass — the app's timer interval.</summary>
+        public TimeSpan Interval { get; init; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>Read the clock and let the interval pass, as the app's timer does.</summary>
+        public DateTime Read()
+        {
+            var now = _now;
+            _now += Interval;
+            return now;
+        }
+
+        /// <summary>Jump forward without a tick — the machine slept, or the UI
+        /// thread was busy, and nobody counted the seconds.</summary>
+        public void Skip(TimeSpan gap) => _now += gap;
+
+        public Func<DateTime> Func => Read;
+    }
+
     private static PomodoroSettings Settings(int focus = 25, int shortBreak = 5,
                                              int longBreak = 15, int rounds = 4) => new()
     {
@@ -19,9 +46,12 @@ public class PomodoroMachineTests
     };
 
     private static PomodoroMachine Machine(PomodoroSettings? s = null)
+        => Machine(new FakeClock(), s);
+
+    private static PomodoroMachine Machine(FakeClock clock, PomodoroSettings? s = null)
     {
         var settings = s ?? Settings();
-        return new PomodoroMachine(() => settings);
+        return new PomodoroMachine(() => settings, clock.Func);
     }
 
     /// <summary>Run the phase to its last second and return the block it left.</summary>
@@ -187,7 +217,7 @@ public class PomodoroMachineTests
     public void A_settings_change_leaves_the_running_block_alone()
     {
         var settings = Settings();
-        var m = new PomodoroMachine(() => settings);
+        var m = Machine(new FakeClock(), settings);
         m.Tick();
 
         settings.FocusMinutes = 50;
@@ -201,7 +231,7 @@ public class PomodoroMachineTests
     public void The_next_block_picks_the_new_settings_up()
     {
         var settings = Settings();
-        var m = new PomodoroMachine(() => settings);
+        var m = Machine(new FakeClock(), settings);
 
         settings.ShortBreakMinutes = 9;
         RunOut(m);
@@ -214,7 +244,7 @@ public class PomodoroMachineTests
     public void A_completed_focus_is_credited_the_minutes_it_started_with()
     {
         var settings = Settings();
-        var m = new PomodoroMachine(() => settings);
+        var m = Machine(new FakeClock(), settings);
 
         // Lengthening focus mid-block must not inflate what the block banks.
         m.Tick();
@@ -228,7 +258,7 @@ public class PomodoroMachineTests
     public void Refresh_adopts_new_settings_for_the_idle_phase()
     {
         var settings = Settings();
-        var m = new PomodoroMachine(() => settings);
+        var m = Machine(new FakeClock(), settings);
 
         settings.FocusMinutes = 50;
         m.Refresh();
@@ -258,5 +288,236 @@ public class PomodoroMachineTests
         Assert.True(m.IsMidPhase);    // started
         RunOut(m);
         Assert.False(m.IsMidPhase);   // rolled into a fresh phase
+    }
+
+    // ---- The clock on the wall ----
+    //
+    // A tick used to be worth exactly one second no matter how long it had
+    // really been since the last one. Close the lid ten minutes into a block
+    // and the countdown picked up where it left off, so a 25-minute block ate
+    // 35 minutes of the evening and the app said otherwise.
+
+    [Fact]
+    public void A_tick_charges_the_time_that_actually_passed()
+    {
+        var clock = new FakeClock();
+        var m = Machine(clock);
+
+        m.Tick();                        // the block is running
+        clock.Skip(TimeSpan.FromMinutes(10));  // the lid closes
+        m.Tick();                        // and opens again
+
+        // Ten minutes and the two ticks either side of them.
+        Assert.Equal(25 * 60 - (10 * 60 + 2), m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void A_gap_past_the_end_of_the_block_finishes_it()
+    {
+        var clock = new FakeClock();
+        var m = Machine(clock);
+
+        m.Tick();
+        clock.Skip(TimeSpan.FromMinutes(40)); // slept clean through the block
+        var done = m.Tick();
+
+        Assert.NotNull(done);
+        Assert.Equal(PomodoroPhase.Focus, done!.Value.Phase);
+        Assert.Equal(25, done.Value.FocusMinutes);
+    }
+
+    [Fact]
+    public void A_long_gap_only_ever_ends_one_block()
+    {
+        var clock = new FakeClock();
+        var m = Machine(clock);
+
+        m.Tick();
+        clock.Skip(TimeSpan.FromHours(3)); // long enough for a whole afternoon
+        m.Tick();
+
+        // The break that follows starts whole. Sleeping through three hours
+        // must not bank three focus blocks nobody sat through.
+        Assert.Equal(PomodoroPhase.ShortBreak, m.Phase);
+        Assert.Equal(5 * 60, m.RemainingSeconds);
+        Assert.Equal(1, m.Round);
+    }
+
+    [Fact]
+    public void Time_spent_paused_is_not_charged_to_the_block()
+    {
+        var clock = new FakeClock();
+        var m = Machine(clock);
+
+        m.Tick();
+        var left = m.RemainingSeconds;
+
+        clock.Skip(TimeSpan.FromMinutes(30)); // paused, and away from the desk
+        m.Resume();
+        m.Tick();
+
+        Assert.Equal(left - 1, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void Ticks_that_land_short_of_a_second_still_drain_the_block()
+    {
+        // A dispatcher timer is not a metronome: it can fire a shade early, and
+        // charging only whole seconds would then round every gap to nothing and
+        // stop the clock dead. The remainder has to carry.
+        var clock = new FakeClock { Interval = TimeSpan.FromMilliseconds(400) };
+        var m = Machine(clock);
+
+        m.Resume();
+        for (var i = 0; i < 10; i++)
+            m.Tick();
+
+        // Four seconds of clock passed since the reference, so four came off.
+        Assert.Equal(25 * 60 - 4, m.RemainingSeconds);
+    }
+
+    // ---- coming back to a block that was already running ----
+    //
+    // Nothing about the running block was written down, so quitting or crashing
+    // twenty minutes into a focus block lost it outright: the next launch
+    // opened on a fresh 25:00 with no sign there had been anything else.
+
+    /// <summary>A clock that only moves when the test says so.</summary>
+    private static FakeClock StillClock() => new() { Interval = TimeSpan.Zero };
+
+    /// <summary>A machine wound forward to <paramref name="elapsed"/> into its
+    /// first focus block.</summary>
+    private static PomodoroMachine Running(FakeClock clock, TimeSpan elapsed)
+    {
+        var m = Machine(clock);
+        m.Resume();
+        clock.Skip(elapsed);
+        m.Tick();
+        return m;
+    }
+
+    [Fact]
+    public void A_block_left_running_comes_back_with_what_is_really_left()
+    {
+        var clock = StillClock();
+        var saved = Running(clock, TimeSpan.FromMinutes(5)).Snapshot(running: true);
+
+        clock.Skip(TimeSpan.FromMinutes(5)); // the app was shut for five minutes
+        var m = Machine(clock);
+
+        Assert.True(m.Restore(saved));
+        Assert.Equal(15 * 60, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void A_block_left_paused_comes_back_where_it_was_paused()
+    {
+        var clock = StillClock();
+        var saved = Running(clock, TimeSpan.FromMinutes(5)).Snapshot(running: false);
+
+        // Paused is paused: an hour away from the desk takes nothing off it.
+        clock.Skip(TimeSpan.FromHours(1));
+        var m = Machine(clock);
+
+        Assert.True(m.Restore(saved));
+        Assert.Equal(20 * 60, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void A_block_that_ran_out_while_the_app_was_shut_is_not_resumed()
+    {
+        var clock = StillClock();
+        var saved = Running(clock, TimeSpan.FromMinutes(5)).Snapshot(running: true);
+
+        clock.Skip(TimeSpan.FromHours(4));
+        var m = Machine(clock);
+
+        // Nobody sat through it, so there's nothing to hand back — and nothing
+        // to credit either. A fresh block is the honest answer.
+        Assert.False(m.Restore(saved));
+        Assert.Equal(25 * 60, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void The_phase_and_the_round_come_back_too()
+    {
+        var clock = StillClock();
+        var source = Machine(clock);
+        source.Advance();          // focus 1 → short break
+        source.Advance();          // short break → focus, round 2
+        source.Resume();
+        clock.Skip(TimeSpan.FromMinutes(3));
+        source.Tick();
+
+        var saved = source.Snapshot(running: false);
+        var m = Machine(clock);
+
+        Assert.True(m.Restore(saved));
+        Assert.Equal(PomodoroPhase.Focus, m.Phase);
+        Assert.Equal(2, m.Round);
+        Assert.Equal(22 * 60, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void A_restored_block_reads_as_paused_rather_than_untouched()
+    {
+        var clock = StillClock();
+        var saved = Running(clock, TimeSpan.FromMinutes(5)).Snapshot(running: true);
+        var m = Machine(clock);
+
+        m.Restore(saved);
+
+        // What the view dims on: stopped, but part-way through.
+        Assert.True(m.IsMidPhase);
+    }
+
+    [Fact]
+    public void An_untouched_timer_is_nothing_to_come_back_to()
+    {
+        var clock = StillClock();
+        var saved = Machine(clock).Snapshot(running: false);
+
+        Assert.False(Machine(clock).Restore(saved));
+    }
+
+    [Fact]
+    public void Nothing_saved_means_nothing_restored()
+    {
+        Assert.False(Machine().Restore(null));
+    }
+
+    [Fact]
+    public void A_settings_change_while_the_app_was_shut_leaves_the_block_alone()
+    {
+        var clock = StillClock();
+        var settings = Settings();
+        var source = Machine(clock, settings);
+        source.Resume();
+        clock.Skip(TimeSpan.FromMinutes(5));
+        source.Tick();
+        var saved = source.Snapshot(running: false);
+
+        settings.FocusMinutes = 50;
+        var m = Machine(clock, settings);
+        m.Restore(saved);
+
+        // The block resumes at the scale it started with, or the progress bar
+        // it comes back to would be measuring a different block.
+        Assert.Equal(25 * 60, m.PhaseTotalSeconds);
+        Assert.Equal(20 * 60, m.RemainingSeconds);
+    }
+
+    [Fact]
+    public void A_clock_that_steps_backwards_never_adds_time()
+    {
+        var clock = new FakeClock();
+        var m = Machine(clock);
+
+        m.Tick();
+        var left = m.RemainingSeconds;
+        clock.Skip(TimeSpan.FromHours(-1)); // the OS corrected the clock
+        m.Tick();
+
+        Assert.Equal(left, m.RemainingSeconds);
     }
 }

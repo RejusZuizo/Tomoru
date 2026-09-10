@@ -26,6 +26,13 @@ public class JsonStorageService : IStorageService
 
     public string Location => _filePath;
 
+    /// <summary>The OS application-data folder the app really uses. Exposed so
+    /// the single-instance lock can be taken against it before Avalonia starts,
+    /// without a second copy of this path drifting out of step.</summary>
+    public static string DefaultDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Tomoru");
+
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
@@ -38,9 +45,7 @@ public class JsonStorageService : IStorageService
     /// directory-taking one below is what the tests use, and a test pointing at
     /// a throwaway folder should never reach into the real app-data.</para></summary>
     public JsonStorageService()
-        : this(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Tomoru"))
+        : this(DefaultDirectory)
     {
         LegacyProfile.Migrate(Path.GetDirectoryName(_filePath)!);
     }

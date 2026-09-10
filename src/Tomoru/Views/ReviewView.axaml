@@ -341,15 +341,15 @@
             </StackPanel>
         </Grid>
 
-        <!-- The card: a bounded panel, centered. The text face pins the prompt
-             to the top and the answer to the bottom with the rule between them,
-             so the card's height frames the Q/A instead of leaving them adrift
-             in the middle. Sat directly in the row (not a ScrollViewer) so the
-             * middle row has a real height to expand into — a surrounding
-             scroll viewer measures with infinite height and collapses it. -->
-        <Border Grid.Row="1" Classes="card" Margin="0,16" Padding="44,36"
+        <!-- The card: a bounded panel, centered, sized to what's on it.
+             It used to hold a fixed 380–620 and push the prompt to the top edge
+             and the answer to the bottom, which framed a long card nicely and
+             left a short one — most of them — as two lines of text with a void
+             between. The minimum keeps a one-line card from reading as a
+             tooltip; past that the card grows with its content. -->
+        <Border Grid.Row="1" x:Name="CardFrame" Classes="card" Margin="0,16" Padding="44,36"
                 VerticalAlignment="Center" HorizontalAlignment="Center"
-                MinWidth="560" MaxWidth="860" MinHeight="380" MaxHeight="620"
+                MinWidth="560" MaxWidth="860" MinHeight="180" MaxHeight="620"
                 IsVisible="{Binding !IsSessionDone}">
             <Grid>
                 <!-- Image-occlusion card: image + masks (flips face on reveal).
@@ -371,31 +371,37 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Text / cloze / media card: prompt top, answer bottom -->
-                <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding !IsOcclusionCard}">
-                    <StackPanel Grid.Row="0" Spacing="14" VerticalAlignment="Top">
-                        <TextBlock Text="// 問 · prompt" Classes="jp" IsVisible="{Binding ShowFront}" />
-                        <ctl:CardContentRenderer Source="{Binding CardFrontSource}"
-                                                 ClozeOrd="{Binding CardClozeOrd}"
-                                                 Side="Front" ContentFontSize="20"
-                                                 IsVisible="{Binding ShowFront}" />
-                    </StackPanel>
+                <!-- Text / cloze / media card: the answer opens directly under
+                     the prompt, so revealing adds to the card rather than
+                     filling a gap that was being held open for it. Its own
+                     scroll viewer, since the rows are content-sized now and a
+                     long card would otherwise run past the card's maximum. -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              IsVisible="{Binding !IsOcclusionCard}">
+                    <StackPanel VerticalAlignment="Top">
+                        <StackPanel Spacing="14">
+                            <TextBlock Text="// 問 · prompt" Classes="jp" IsVisible="{Binding ShowFront}" />
+                            <ctl:CardContentRenderer Source="{Binding CardFrontSource}"
+                                                     ClozeOrd="{Binding CardClozeOrd}"
+                                                     Side="Front" ContentFontSize="20"
+                                                     IsVisible="{Binding ShowFront}" />
+                        </StackPanel>
 
-                    <!-- The rule that divides prompt from answer, floating in the
-                         gap between them. -->
-                    <Border Grid.Row="1" Height="1" VerticalAlignment="Center"
-                            Background="{DynamicResource BorderBrush}" Margin="0,20"
-                            IsVisible="{Binding ShowDivider}" />
+                        <!-- The rule that divides prompt from answer. -->
+                        <Border Height="1" Background="{DynamicResource BorderBrush}"
+                                Margin="0,24" IsVisible="{Binding ShowDivider}" />
 
-                    <StackPanel Grid.Row="2" Spacing="14" VerticalAlignment="Bottom"
-                                IsVisible="{Binding IsFlipped}"
-                                Classes.answerReveal="{Binding IsFlipped}">
-                        <TextBlock Text="// 答 · answer" Classes="jp" />
-                        <ctl:CardContentRenderer Source="{Binding CardBackSource}"
-                                                 ClozeOrd="{Binding CardClozeOrd}"
-                                                 Side="Back" ContentFontSize="17" />
+                        <StackPanel Spacing="14"
+                                    IsVisible="{Binding IsFlipped}"
+                                    Classes.answerReveal="{Binding IsFlipped}">
+                            <TextBlock Text="// 答 · answer" Classes="jp" />
+                            <ctl:CardContentRenderer Source="{Binding CardBackSource}"
+                                                     ClozeOrd="{Binding CardClozeOrd}"
+                                                     Side="Back" ContentFontSize="17" />
+                        </StackPanel>
                     </StackPanel>
-                </Grid>
+                </ScrollViewer>
             </Grid>
         </Border>
 

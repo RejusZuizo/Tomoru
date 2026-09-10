@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using Tomoru.Services;
 using Tomoru.ViewModels;
 using Tomoru.Views;
@@ -17,6 +18,12 @@ public partial class App : Application
     private NativeMenuItem? _trayToggle;
     private IGlobalHotkeyService? _hotkey;
     private MainWindowViewModel? _vm;
+    private DispatcherTimer? _instanceWatch;
+
+    /// <summary>The single-instance lock this process holds, handed over by
+    /// <see cref="Program"/> — it's taken before Avalonia starts, so that a
+    /// second launch costs nothing and never flashes a window.</summary>
+    public static SingleInstance? Instance { get; set; }
 
     public override void Initialize()
     {
@@ -54,6 +61,7 @@ public partial class App : Application
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             desktop.Exit += (_, _) =>
             {
+                _instanceWatch?.Stop();
                 _hotkey?.Dispose();
                 _vm?.FlushSave();
                 _vm?.Music.Shutdown();
@@ -62,6 +70,7 @@ public partial class App : Application
 
             SetupTray(desktop);
             SetupHotkey(desktop);
+            WatchForSecondLaunch(desktop);
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -111,6 +120,29 @@ public partial class App : Application
         // Keep the tooltip and the start/pause entry in step with the timer.
         _vm.Today.Pomodoro.PropertyChanged += OnPomodoroChanged;
         UpdateTray();
+    }
+
+    /// <summary>Someone launched tomoru again while it was already running —
+    /// most likely from the launcher, after closing the window to the tray.
+    /// That copy quit immediately and left a note; bring this window forward,
+    /// which is what they were asking for.
+    ///
+    /// <para>A poll rather than a file watcher: it's one <c>File.Exists</c>
+    /// every couple of seconds, and it behaves the same on all three platforms
+    /// — which a watcher, over the various network and synced folders app-data
+    /// can live on, does not.</para></summary>
+    private void WatchForSecondLaunch(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (Instance is null)
+            return;
+
+        _instanceWatch = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _instanceWatch.Tick += (_, _) =>
+        {
+            if (Instance.ConsumeSignal())
+                ShowMainWindow(desktop);
+        };
+        _instanceWatch.Start();
     }
 
     /// <summary>Pick the platform's global-hotkey flavour and hand it to the

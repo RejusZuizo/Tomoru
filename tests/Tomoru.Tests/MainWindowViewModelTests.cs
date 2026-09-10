@@ -46,7 +46,42 @@ public class MainWindowViewModelTests : IDisposable
         }
     }
 
+    /// <summary>Storage that won't write: a full disk, a file the sync client
+    /// has open, a drive that went away mid-session. Everything else about it
+    /// is real, because the shell reads Location on the way up.</summary>
+    private sealed class FailingStorage : IStorageService, IDisposable
+    {
+        private readonly string _dir =
+            Path.Combine(Path.GetTempPath(), "tomoru-tests", Guid.NewGuid().ToString("N"));
+
+        /// <summary>How many writes fail before the disk comes back. Every one
+        /// of them, unless a test says otherwise.</summary>
+        public int FailFirst { get; init; } = int.MaxValue;
+
+        public int Attempts { get; private set; }
+        public int Written { get; private set; }
+
+        public FailingStorage() => Directory.CreateDirectory(_dir);
+
+        public string Location => Path.Combine(_dir, "tomoru.json");
+        public AppState Load() => new();
+
+        public void Save(AppState state)
+        {
+            Attempts++;
+            if (Attempts <= FailFirst)
+                throw new IOException("There is not enough space on the disk.");
+            Written++;
+        }
+
+        public void Dispose()
+        {
+            try { Directory.Delete(_dir, recursive: true); } catch { /* temp dir */ }
+        }
+    }
+
     private readonly List<TempStorage> _made = new();
+    private readonly List<FailingStorage> _failing = new();
 
     private MainWindowViewModel Shell(AppState? state = null)
     {
@@ -55,10 +90,219 @@ public class MainWindowViewModelTests : IDisposable
         return new MainWindowViewModel(storage);
     }
 
+    private MainWindowViewModel Shell(FailingStorage storage)
+    {
+        _failing.Add(storage);
+        return new MainWindowViewModel(storage);
+    }
+
     public void Dispose()
     {
         foreach (var s in _made) s.Dispose();
+        foreach (var s in _failing) s.Dispose();
     }
+
+    // ---- the block that was on the clock ----
+    //
+    // Nothing about the running timer was written down, so quitting or crashing
+    // twenty minutes into a focus block lost it: the next launch opened on a
+    // fresh 25:00 with no sign there had been anything else.
+
+    private static AppState WithBlock(int remainingSeconds, bool running, int endsInSeconds = 0) =>
+        new()
+        {
+            Timer = new TimerBlock
+            {
+                Phase = PomodoroPhase.Focus,
+                Round = 2,
+                PhaseTotalSeconds = 25 * 60,
+                PhaseFocusMinutes = 25,
+                RemainingSeconds = remainingSeconds,
+                EndsAt = DateTime.Now.AddSeconds(endsInSeconds),
+                WasRunning = running
+            }
+        };
+
+    [Fact]
+    public void A_paused_block_is_waiting_where_it_was_left() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(15 * 60, running: false));
+
+        Assert.Equal("15:00", vm.Today.Pomodoro.TimeDisplay);
+        Assert.False(vm.Today.Pomodoro.IsRunning);
+        Assert.True(vm.Today.Pomodoro.IsPaused);
+    });
+
+    [Fact]
+    public void A_running_block_comes_back_minus_the_time_the_app_was_shut() => Headless.Run(() =>
+    {
+        // Written down with twenty minutes left, but its finish line is ten
+        // minutes out — the app was closed for the ten in between.
+        var vm = Shell(WithBlock(20 * 60, running: true, endsInSeconds: 10 * 60));
+
+        var minutes = int.Parse(vm.Today.Pomodoro.TimeDisplay.Split(':')[0]);
+        Assert.InRange(minutes, 9, 10);
+    });
+
+    [Fact]
+    public void A_block_that_ran_out_while_the_app_was_shut_opens_fresh() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(20 * 60, running: true, endsInSeconds: -60));
+
+        Assert.Equal("25:00", vm.Today.Pomodoro.TimeDisplay);
+        Assert.False(vm.Today.Pomodoro.IsPaused);
+    });
+
+    [Fact]
+    public void The_round_survives_the_restart_too() => Headless.Run(() =>
+    {
+        var vm = Shell(WithBlock(15 * 60, running: false));
+
+        // Round 2 of the set — coming back on round 1 would put the long break
+        // in the wrong place for the rest of the afternoon.
+        Assert.Equal("● ● ○ ○", vm.Today.Pomodoro.RoundLabel);
+    });
+
+    [Fact]
+    public void Starting_the_timer_writes_the_block_down() => Headless.Run(() =>
+    {
+        var state = new AppState();
+        var vm = Shell(state);
+
+        vm.Today.Pomodoro.ToggleRunCommand.Execute(null);
+
+        Assert.NotNull(state.Timer);
+        Assert.True(state.Timer!.WasRunning);
+
+        vm.Today.Pomodoro.ToggleRunCommand.Execute(null);
+
+        Assert.False(state.Timer!.WasRunning);
+    });
+
+    // ---- the collection is not rewritten per card ----
+    //
+    // Every graded card used to mark the decks dirty, so the next debounced
+    // save rewrote decks.json in full — 6.4MB and ~70ms of frozen UI for a
+    // 6,000-note import, between one card and the next, to record a few bytes
+    // of scheduling. The write is throttled now and flushed at the edges.
+
+    /// <summary>A deck of new cards, due now.</summary>
+    private static Deck DueDeck(params string[] fronts)
+    {
+        var deck = new Deck { Name = "big import" };
+        foreach (var front in fronts)
+        {
+            deck.Notes.Add(new Note
+            {
+                Type = NoteType.Basic,
+                Fields = { front, $"answer to {front}" },
+                Cards = { new Card { Ord = 0, State = CardState.New, Due = DateTime.Now.AddMinutes(-1) } }
+            });
+        }
+        return deck;
+    }
+
+    private static void Grade(MainWindowViewModel vm, int cards)
+    {
+        vm.Review.ReviewAllCommand.Execute(null);
+        for (var i = 0; i < cards; i++)
+        {
+            vm.Review.FlipCommand.Execute(null);
+            vm.Review.GradeGoodCommand.Execute(null);
+        }
+    }
+
+    [Fact]
+    public void Grading_cards_doesnt_ask_for_the_collection_to_be_rewritten() => Headless.Run(() =>
+    {
+        var state = new AppState();
+        state.Decks.Add(DueDeck("one", "two", "three"));
+
+        var vm = Shell(state);
+        Grade(vm, 3);
+
+        // The debounced save that follows each card writes tomoru.json — the
+        // ember, the reviewed count — and leaves the collection alone.
+        Assert.False(state.DecksDirty);
+    });
+
+    [Fact]
+    public void Leaving_the_review_page_writes_the_collection() => Headless.Run(() =>
+    {
+        var state = new AppState();
+        state.Decks.Add(DueDeck("one", "two"));
+
+        var vm = Shell(state);
+        vm.ActiveDestination = Destination.Review;
+        Grade(vm, 1);
+        vm.ActiveDestination = Destination.Dashboard;
+
+        Assert.True(state.DecksDirty);
+    });
+
+    [Fact]
+    public void The_way_out_writes_the_collection_whatever_happened() => Headless.Run(() =>
+    {
+        var state = new AppState();
+        state.Decks.Add(DueDeck("one"));
+
+        var vm = Shell(state);
+        Grade(vm, 1);
+        vm.FlushSave();
+
+        // The throttle is a performance measure; it must never be the reason a
+        // session's scheduling didn't reach the disk.
+        Assert.True(state.DecksDirty);
+    });
+
+    // ---- when the disk says no ----
+    //
+    // Every file picker in the app runs through Guarded; the save itself never
+    // did. A throw inside the debounced write goes to the dispatcher and takes
+    // the process with it — losing the session the atomic write exists to
+    // protect.
+
+    [Fact]
+    public void A_save_that_cant_write_doesnt_take_the_app_down() => Headless.Run(() =>
+    {
+        Notice.Current.DismissCommand.Execute(null);
+        var vm = Shell(new FailingStorage());
+
+        vm.FlushSave();
+
+        Assert.True(Notice.Current.IsVisible);
+        Assert.Contains("couldn't save", Notice.Current.Text);
+    });
+
+    [Fact]
+    public void A_restore_that_cant_be_written_leaves_the_live_state_alone() => Headless.Run(() =>
+    {
+        // The restore stops saving the old world the moment it believes the new
+        // one is on disk. If that write threw, the app would be left unable to
+        // save at all — every edit for the rest of the session dropped on the
+        // floor — on top of not having restored anything.
+        var storage = new FailingStorage { FailFirst = 1 };
+        var vm = Shell(storage);
+
+        vm.SettingsPage.RestoreHandler!(new AppState { DailyIntention = "the backup" });
+        vm.FlushSave();
+
+        Assert.Equal(1, storage.Written);
+    });
+
+    [Fact]
+    public void A_write_that_fails_once_doesnt_stop_the_next_one() => Headless.Run(() =>
+    {
+        // The drive reappears, or the file is closed again. Nothing should have
+        // latched off in the meantime.
+        var storage = new FailingStorage { FailFirst = 1 };
+        var vm = Shell(storage);
+
+        vm.FlushSave();
+        vm.FlushSave();
+
+        Assert.Equal(1, storage.Written);
+    });
 
     // ---- what the constructor decides ----
 

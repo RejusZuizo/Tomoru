@@ -35,6 +35,37 @@ public class JsonStorageServiceTests : IDisposable
     }
 
     [Fact]
+    public void The_block_on_the_clock_survives_the_round_trip()
+    {
+        // The whole point of writing it down is that it's read back after a
+        // process ended, so the file is the part that has to work.
+        var ends = new DateTime(2025, 3, 1, 21, 40, 0);
+        var store = new JsonStorageService(_dir);
+        store.Save(new()
+        {
+            Timer = new()
+            {
+                Phase = Models.PomodoroPhase.ShortBreak,
+                Round = 3,
+                PhaseTotalSeconds = 5 * 60,
+                PhaseFocusMinutes = 25,
+                RemainingSeconds = 2 * 60,
+                EndsAt = ends,
+                WasRunning = true
+            }
+        });
+
+        var loaded = new JsonStorageService(_dir).Load().Timer;
+
+        Assert.NotNull(loaded);
+        Assert.Equal(Models.PomodoroPhase.ShortBreak, loaded!.Phase);
+        Assert.Equal(3, loaded.Round);
+        Assert.Equal(2 * 60, loaded.RemainingSeconds);
+        Assert.Equal(ends, loaded.EndsAt);
+        Assert.True(loaded.WasRunning);
+    }
+
+    [Fact]
     public void Save_then_load_round_trips_state()
     {
         var store = new JsonStorageService(_dir);
